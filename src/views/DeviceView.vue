@@ -183,6 +183,7 @@ const getStatusText = (status: string) => {
     <!-- Tabbar at the bottom -->
     <van-tabbar route>
       <van-tabbar-item replace to="/device" icon="apps-o">设备</van-tabbar-item>
+      <van-tabbar-item replace to="/contacts" icon="contact-o">通知人</van-tabbar-item>
       <van-tabbar-item replace to="/profile" icon="user-o">我的</van-tabbar-item>
     </van-tabbar>
   </div>
