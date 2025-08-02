@@ -32,7 +32,8 @@ const editName = async () => {
       }
     })
     
-    if (res.value) {
+    // 使用类型断言确保 res 有 value 属性
+    if ('value' in res && typeof res.value === 'string') {
       user.value.name = res.value
       showSuccessToast('昵称修改成功')
     }
