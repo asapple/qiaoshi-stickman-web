@@ -135,6 +135,24 @@ Create a `.env` file in the project root:
 VITE_API_BASE_URL=http://localhost:3000/api
 ```
 
+## CI/CD Deployment
+
+This project uses GitHub Actions for continuous integration and deployment to GitHub Pages.
+
+### Setup for GitHub Pages Deployment
+
+1. Generate a Personal Access Token (PAT) with `repo` permissions:
+   - Go to GitHub Settings > Developer settings > Personal access tokens > Tokens (classic)
+   - Generate a new token with `repo` scope
+   - Copy the token
+
+2. Add the PAT as a secret in your repository:
+   - Go to your repository Settings > Secrets and variables > Actions
+   - Create a new repository secret named `PAT`
+   - Paste your Personal Access Token as the value
+
+3. The deployment workflow will automatically run on pushes to the `main` branch.
+
 ## Contributing
 
 1. Fork the repository
