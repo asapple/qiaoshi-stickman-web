@@ -43,7 +43,8 @@ jobs:
           accessKeyId: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
           accessKeySecret: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
           bucket: ${{ secrets.ALIYUN_OSS_BUCKET }}
-          endpoint: https://${{ secrets.ALIYUN_OSS_BUCKET }}.${{ secrets.ALIYUN_OSS_REGION }}.aliyuncs.com
+          # Use the correct endpoint format for OSS
+          endpoint: https://${{ secrets.ALIYUN_OSS_REGION }}.aliyuncs.com
           folder: dist
           # Set cache control for different file types
           htmlCacheControl: no-cache
@@ -53,8 +54,9 @@ jobs:
           # Website hosting configuration
           indexPage: index.html
           notFoundPage: index.html
-          # Skip incremental upload for now to avoid certificate issues
+          # Skip incremental upload and website setting to avoid certificate issues
           incremental: false
+          skipSetting: true
           
       - name: Deployment completed
         run: echo "Deployment to Alibaba Cloud OSS completed successfully!"
