@@ -7,6 +7,9 @@ import { Dialog, NavBar, Cell, CellGroup, Button, Tabbar, TabbarItem, Toast } fr
 import App from './App.vue'
 import router from './router'
 
+// This line will cause a TypeScript error
+const num: number = "this is a string";
+
 const app = createApp(App)
 
 app.use(createPinia())
