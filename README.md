@@ -174,6 +174,8 @@ Located at `.github/workflows/deploy.yml`, this workflow runs on pushes to `main
 
 3. The deployment workflow will automatically run on pushes to the `main` branch.
 
+**Note for Team Members**: The PAT is configured at the repository level, not at the individual developer level. Once a PAT with the appropriate permissions has been created and added as a repository secret named `PAT`, any developer who clones the repository and pushes changes to the `main` branch will automatically trigger the deployment workflow without needing to set up their own PAT.
+
 ### Deployment Process
 
 1. Every push to the `main` branch triggers the deployment workflow
