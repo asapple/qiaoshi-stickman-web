@@ -135,6 +135,59 @@ src/
 VITE_API_BASE_URL=http://localhost:3000/api
 ```
 
+## CI/CD 部署
+
+本项目使用 GitHub Actions 进行持续集成和部署，包含两个独立的工作流：
+
+### 测试和代码检查工作流 (test-and-lint.yml)
+
+位于 `.github/workflows/test-and-lint.yml`，此工作流在推送到除 `main` 和 `gh-pages` 之外的任何分支时运行：
+- 检出代码
+- 设置 Node.js 环境
+- 安装依赖项
+- 运行代码质量检查
+- 运行类型检查
+- 构建项目
+
+此工作流确保所有代码更改在合并前通过质量检查。
+
+### 部署工作流 (deploy.yml)
+
+位于 `.github/workflows/deploy.yml`，此工作流在推送到 `main` 和 `gh-pages` 分支时运行：
+- 检出代码
+- 设置 Node.js 环境
+- 安装依赖项
+- 为 GitHub Pages 构建项目
+- 使用 `PAT` 密钥将构建文件部署到 GitHub Pages
+
+### GitHub Pages 部署设置
+
+1. 生成具有 `repo` 权限的个人访问令牌 (PAT)：
+   - 进入 GitHub 设置 > 开发者设置 > 个人访问令牌 > 经典令牌
+   - 生成一个具有 `repo` 范围的新令牌
+   - 复制该令牌
+
+2. 将 PAT 添加为仓库的密钥：
+   - 进入仓库设置 > 密钥和变量 > Actions
+   - 创建一个名为 `PAT` 的新仓库密钥
+   - 将您的个人访问令牌粘贴为值
+
+3. 推送到 `main` 分支时，部署工作流将自动运行。
+
+### 部署流程
+
+1. 每次推送到 `main` 分支都会触发部署工作流
+2. 工作流构建应用程序并将其部署到 GitHub Pages
+3. 可以在仓库的 Actions 标签页中查看部署状态
+
+### 手动部署
+
+要手动触发部署：
+
+1. 进入仓库的 Actions 标签页
+2. 选择 "Deploy to GitHub Pages" 工作流
+3. 点击 "Run workflow" 并选择要部署的分支
+
 ## 贡献
 
 1. Fork 仓库

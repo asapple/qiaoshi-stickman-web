@@ -137,7 +137,28 @@ VITE_API_BASE_URL=http://localhost:3000/api
 
 ## CI/CD Deployment
 
-This project uses GitHub Actions for continuous integration and deployment to GitHub Pages.
+This project uses GitHub Actions for continuous integration and deployment with two separate workflows:
+
+### Test and Lint Workflow (test-and-lint.yml)
+
+Located at `.github/workflows/test-and-lint.yml`, this workflow runs on every push to branches other than `main` and `gh-pages`:
+- Checks out the code
+- Sets up Node.js environment
+- Installs dependencies
+- Runs linter to check code quality
+- Runs type checking
+- Builds the project
+
+This workflow ensures that all code changes pass quality checks before merging.
+
+### Deployment Workflow (deploy.yml)
+
+Located at `.github/workflows/deploy.yml`, this workflow runs on pushes to `main` and `gh-pages` branches:
+- Checks out the code
+- Sets up Node.js environment
+- Installs dependencies
+- Builds the project for GitHub Pages
+- Deploys the built files to GitHub Pages using the `PAT` secret
 
 ### Setup for GitHub Pages Deployment
 
@@ -152,6 +173,20 @@ This project uses GitHub Actions for continuous integration and deployment to Gi
    - Paste your Personal Access Token as the value
 
 3. The deployment workflow will automatically run on pushes to the `main` branch.
+
+### Deployment Process
+
+1. Every push to the `main` branch triggers the deployment workflow
+2. The workflow builds the application and deploys it to GitHub Pages
+3. Deployment status can be viewed in the Actions tab of the repository
+
+### Manual Deployment
+
+To manually trigger a deployment:
+
+1. Go to the repository's Actions tab
+2. Select the "Deploy to GitHub Pages" workflow
+3. Click "Run workflow" and select the branch to deploy from
 
 ## Contributing
 
