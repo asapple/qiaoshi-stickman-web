@@ -43,29 +43,18 @@ jobs:
           accessKeyId: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
           accessKeySecret: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
           bucket: ${{ secrets.ALIYUN_OSS_BUCKET }}
-          region: ${{ secrets.ALIYUN_OSS_REGION }}
           endpoint: https://${{ secrets.ALIYUN_OSS_BUCKET }}.${{ secrets.ALIYUN_OSS_REGION }}.aliyuncs.com
           folder: dist
-          # Clean previous files before uploading new ones
-          clean: true
-          # Set proper cache headers for different file types
-          headers: |
-            - pattern: "**/*.html"
-              headers:
-                - name: "Cache-Control"
-                  value: "no-cache"
-            - pattern: "**/*.{js,css}"
-              headers:
-                - name: "Cache-Control"
-                  value: "public, max-age=31536000"
-            - pattern: "**/*.{png,jpg,jpeg,gif,svg,ico}"
-              headers:
-                - name: "Cache-Control"
-                  value: "public, max-age=31536000"
-          # Configure website hosting settings
-          website: |
-            index: index.html
-            error: index.html
+          # Set cache control for different file types
+          htmlCacheControl: no-cache
+          imageCacheControl: max-age=864000
+          otherCacheControl: max-age=2592000
+          pdfCacheControl: max-age=2592000
+          # Website hosting configuration
+          indexPage: index.html
+          notFoundPage: index.html
+          # Skip incremental upload for now to avoid certificate issues
+          incremental: false
           
       - name: Deployment completed
         run: echo "Deployment to Alibaba Cloud OSS completed successfully!"
