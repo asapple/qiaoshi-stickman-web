@@ -48,18 +48,18 @@ const showAddDevice = () => {
 // Add device function
 const addDevice = () => {
   if (!newDevice.value.deviceId) {
-    VanToast('请输入设备ID')
+    VanToast.show('请输入设备ID')
     return
   }
   
   if (!newDevice.value.devicePassword) {
-    VanToast('请输入设备密码')
+    VanToast.show('请输入设备密码')
     return
   }
   
   // In a real app, you would send this data to the server
   console.log('Adding device:', newDevice.value)
-  VanToast('设备添加成功')
+  VanToast.show('设备添加成功')
   
   // Reset form and close popup
   newDevice.value.deviceId = ''

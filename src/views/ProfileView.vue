@@ -18,7 +18,7 @@ const editName = () => {
     title: '修改昵称',
     message: '请输入新的昵称',
     defaultValue: user.value.name,
-    beforeClose: (action, done) => {
+    beforeClose: (action: string, done: () => void) => {
       if (action === 'confirm') {
         // 这里可以添加验证逻辑
         done()
@@ -26,7 +26,7 @@ const editName = () => {
         done()
       }
     }
-  }).then((res) => {
+  }).then((res: { value: string }) => {
     if (res.value) {
       user.value.name = res.value
     }

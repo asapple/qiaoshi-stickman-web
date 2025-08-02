@@ -78,17 +78,17 @@ const showPasswordChange = () => {
 // Change password
 const changePassword = () => {
   if (!passwordForm.value.oldPassword) {
-    VanToast('请输入旧密码')
+    VanToast.show('请输入旧密码')
     return
   }
 
   if (!passwordForm.value.newPassword) {
-    VanToast('请输入新密码')
+    VanToast.show('请输入新密码')
     return
   }
 
   if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-    VanToast('新密码与确认密码不一致')
+    VanToast.show('新密码与确认密码不一致')
     return
   }
 
@@ -98,7 +98,7 @@ const changePassword = () => {
     newPassword: passwordForm.value.newPassword
   })
 
-  VanToast('密码修改成功')
+  VanToast.show('密码修改成功')
 
   // Reset form and close popup
   passwordForm.value.oldPassword = ''

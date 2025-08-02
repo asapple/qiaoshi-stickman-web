@@ -2,7 +2,7 @@ import 'vant/lib/index.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import { Dialog, NavBar, Cell, CellGroup, Button, Tabbar, TabbarItem } from 'vant'
+import { Dialog, NavBar, Cell, CellGroup, Button, Tabbar, TabbarItem, Toast } from 'vant'
 
 import App from './App.vue'
 import router from './router'
@@ -18,5 +18,6 @@ app.use(CellGroup)
 app.use(Button)
 app.use(Tabbar)
 app.use(TabbarItem)
+app.use(Toast)
 
 app.mount('#app')

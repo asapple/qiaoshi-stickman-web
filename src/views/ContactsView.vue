@@ -22,7 +22,7 @@ const contacts = ref([
 
 // 搜索相关
 const searchKeyword = ref('')
-const searchResults = ref([])
+const searchResults = ref<Array<{ id: number; name: string; phone: string }>>([])
 
 // 添加联系人相关
 const showAddContactPopup = ref(false)
@@ -35,7 +35,7 @@ const newContact = ref({
 // 搜索联系人
 const searchContacts = () => {
   if (!searchKeyword.value) {
-    VanToast('请输入搜索关键词')
+    VanToast.show('请输入搜索关键词')
     return
   }
   
@@ -47,14 +47,14 @@ const searchContacts = () => {
   )
   
   if (searchResults.value.length === 0) {
-    VanToast('未找到匹配的联系人')
+    VanToast.show('未找到匹配的联系人')
   }
 }
 
 // 删除联系人
 const deleteContact = (id: number) => {
   contacts.value = contacts.value.filter(contact => contact.id !== id)
-  VanToast('联系人已删除')
+  VanToast.show('联系人已删除')
 }
 
 // 显示添加联系人弹窗
@@ -65,30 +65,30 @@ const showAddContact = () => {
 // 发送验证码
 const sendVerificationCode = () => {
   if (!newContact.value.phone) {
-    VanToast('请输入手机号')
+    VanToast.show('请输入手机号')
     return
   }
   
   // 这里应该调用后端API发送验证码
   // 模拟发送验证码
   newContact.value.code = '123456'
-  VanToast('验证码已发送')
+  VanToast.show('验证码已发送')
 }
 
 // 添加新联系人
 const addContact = () => {
   if (!newContact.value.name) {
-    VanToast('请输入昵称')
+    VanToast.show('请输入昵称')
     return
   }
   
   if (!newContact.value.phone) {
-    VanToast('请输入手机号')
+    VanToast.show('请输入手机号')
     return
   }
   
   if (!newContact.value.code) {
-    VanToast('请输入验证码')
+    VanToast.show('请输入验证码')
     return
   }
   
@@ -103,7 +103,7 @@ const addContact = () => {
     phone: newContact.value.phone
   })
   
-  VanToast('联系人添加成功')
+  VanToast.show('联系人添加成功')
   
   // 重置表单并关闭弹窗
   newContact.value.name = ''

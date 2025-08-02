@@ -33,17 +33,17 @@ const codeRules = [
 // Send verification code
 const sendCode = () => {
   if (!mobile.value) {
-    VanToast('请输入手机号')
+    VanToast.show('请输入手机号')
     return
   }
   
   if (!/^1[3-9]\d{9}$/.test(mobile.value)) {
-    VanToast('请输入正确的手机号')
+    VanToast.show('请输入正确的手机号')
     return
   }
   
   // In a real app, you would send a request to get the verification code
-  VanToast('验证码已发送')
+  VanToast.show('验证码已发送')
 }
 
 // Handle login
