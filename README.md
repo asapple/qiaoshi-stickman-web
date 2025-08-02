@@ -137,7 +137,7 @@ VITE_API_BASE_URL=http://localhost:3000/api
 
 ## CI/CD Deployment
 
-This project uses GitHub Actions for continuous integration and deployment with two separate workflows:
+This project uses GitHub Actions for continuous integration and deployment with multiple workflows:
 
 ### Test and Lint Workflow (test-and-lint.yml)
 
@@ -151,7 +151,7 @@ Located at `.github/workflows/test-and-lint.yml`, this workflow runs on every pu
 
 This workflow ensures that all code changes pass quality checks before merging.
 
-### Deployment Workflow (deploy.yml)
+### GitHub Pages Deployment Workflow (deploy.yml)
 
 Located at `.github/workflows/deploy.yml`, this workflow runs on pushes to `main` and `gh-pages` branches:
 - Checks out the code
@@ -159,6 +159,15 @@ Located at `.github/workflows/deploy.yml`, this workflow runs on pushes to `main
 - Installs dependencies
 - Builds the project for GitHub Pages
 - Deploys the built files to GitHub Pages using the `PAT` secret
+
+### Alibaba Cloud OSS Deployment Workflow (aliyun-oss-deploy.yml)
+
+Located at `.github/workflows/aliyun-oss-deploy.yml`, this workflow runs on pushes to the `main` branch:
+- Checks out the code
+- Sets up Node.js environment
+- Installs dependencies
+- Builds the project
+- Deploys the built files to Alibaba Cloud OSS
 
 ### Setup for GitHub Pages Deployment
 
@@ -176,10 +185,23 @@ Located at `.github/workflows/deploy.yml`, this workflow runs on pushes to `main
 
 **Note for Team Members**: The PAT is configured at the repository level, not at the individual developer level. Once a PAT with the appropriate permissions has been created and added as a repository secret named `PAT`, any developer who clones the repository and pushes changes to the `main` branch will automatically trigger the deployment workflow without needing to set up their own PAT.
 
+### Setup for Alibaba Cloud OSS Deployment
+
+To enable automatic deployment to Alibaba Cloud OSS, you need to configure the following secrets in your repository:
+
+1. Go to your repository Settings > Secrets and variables > Actions
+2. Create the following repository secrets:
+   - `ALIYUN_ACCESS_KEY_ID` - Your Alibaba Cloud Access Key ID
+   - `ALIYUN_ACCESS_KEY_SECRET` - Your Alibaba Cloud Access Key Secret
+   - `ALIYUN_OSS_BUCKET` - Your OSS bucket name
+   - `ALIYUN_OSS_REGION` - Your OSS region (e.g., `oss-cn-hangzhou`)
+
+These secrets will be used by the Alibaba Cloud OSS deployment workflow to authenticate and deploy your application.
+
 ### Deployment Process
 
-1. Every push to the `main` branch triggers the deployment workflow
-2. The workflow builds the application and deploys it to GitHub Pages
+1. Every push to the `main` branch triggers both deployment workflows
+2. The workflows build the application and deploy it to their respective platforms
 3. Deployment status can be viewed in the Actions tab of the repository
 
 ### Manual Deployment
@@ -187,7 +209,7 @@ Located at `.github/workflows/deploy.yml`, this workflow runs on pushes to `main
 To manually trigger a deployment:
 
 1. Go to the repository's Actions tab
-2. Select the "Deploy to GitHub Pages" workflow
+2. Select the desired workflow ("Deploy to GitHub Pages" or "Deploy to Alibaba Cloud OSS")
 3. Click "Run workflow" and select the branch to deploy from
 
 ## Contributing

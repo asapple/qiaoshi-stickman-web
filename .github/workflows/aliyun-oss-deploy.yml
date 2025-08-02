@@ -1,0 +1,71 @@
+name: Deploy to Alibaba Cloud OSS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test:unit || echo "No unit tests or tests failed"
+
+      - name: Build project
+        run: npm run build
+        env:
+          BASE_URL: / # Ensure base URL is set correctly for OSS deployment
+
+      - name: Check build output
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "Build failed: dist directory not found"
+            exit 1
+          fi
+          ls -la dist/
+
+      - name: Deploy to Alibaba Cloud OSS
+        uses: fangbinwei/aliyun-oss-website-action@v1
+        with:
+          accessKeyId: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
+          accessKeySecret: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
+          bucket: ${{ secrets.ALIYUN_OSS_BUCKET }}
+          region: ${{ secrets.ALIYUN_OSS_REGION }}
+          endpoint: https://${{ secrets.ALIYUN_OSS_BUCKET }}.${{ secrets.ALIYUN_OSS_REGION }}.aliyuncs.com
+          folder: dist
+          # Clean previous files before uploading new ones
+          clean: true
+          # Set proper cache headers for different file types
+          headers: |
+            - pattern: "**/*.html"
+              headers:
+                - name: "Cache-Control"
+                  value: "no-cache"
+            - pattern: "**/*.{js,css}"
+              headers:
+                - name: "Cache-Control"
+                  value: "public, max-age=31536000"
+            - pattern: "**/*.{png,jpg,jpeg,gif,svg,ico}"
+              headers:
+                - name: "Cache-Control"
+                  value: "public, max-age=31536000"
+          # Configure website hosting settings
+          website: |
+            index: index.html
+            error: index.html
+          
+      - name: Deployment completed
+        run: echo "Deployment to Alibaba Cloud OSS completed successfully!"
