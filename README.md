@@ -196,7 +196,17 @@ To enable automatic deployment to Alibaba Cloud OSS, you need to configure the f
    - `ALIYUN_OSS_BUCKET` - Your OSS bucket name
    - `ALIYUN_OSS_REGION` - Your OSS region (e.g., `oss-cn-hangzhou`)
 
-These secrets will be used by the Alibaba Cloud OSS deployment workflow to authenticate and deploy your application.
+Additionally, you need to configure your OSS bucket for public access and static website hosting:
+
+1. In the Alibaba Cloud OSS console, navigate to your bucket
+2. Configure static website hosting:
+   - Go to "Basic Settings" > "Static Pages"
+   - Set the default homepage to `index.html`
+   - Set the 404 page to `index.html` (required for Vue Router's history mode)
+3. Configure public access:
+   - Go to "Permissions" > "Bucket ACL"
+   - Set the bucket ACL to "Public Read"
+   - Alternatively, configure a more specific policy in "Permissions" > "Bucket Policy"
 
 ### Deployment Process
 

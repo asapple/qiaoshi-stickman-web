@@ -137,7 +137,7 @@ VITE_API_BASE_URL=http://localhost:3000/api
 
 ## CI/CD 部署
 
-本项目使用 GitHub Actions 进行持续集成和部署，包含两个独立的工作流：
+本项目使用 GitHub Actions 进行持续集成和部署，包含多个工作流：
 
 ### 测试和代码检查工作流 (test-and-lint.yml)
 
@@ -151,7 +151,7 @@ VITE_API_BASE_URL=http://localhost:3000/api
 
 此工作流确保所有代码更改在合并前通过质量检查。
 
-### 部署工作流 (deploy.yml)
+### GitHub Pages 部署工作流 (deploy.yml)
 
 位于 `.github/workflows/deploy.yml`，此工作流在推送到 `main` 和 `gh-pages` 分支时运行：
 - 检出代码
@@ -159,6 +159,15 @@ VITE_API_BASE_URL=http://localhost:3000/api
 - 安装依赖项
 - 为 GitHub Pages 构建项目
 - 使用 `PAT` 密钥将构建文件部署到 GitHub Pages
+
+### 阿里云 OSS 部署工作流 (aliyun-oss-deploy.yml)
+
+位于 `.github/workflows/aliyun-oss-deploy.yml`，此工作流在推送到 `main` 分支时运行：
+- 检出代码
+- 设置 Node.js 环境
+- 安装依赖项
+- 构建项目
+- 将构建文件部署到阿里云 OSS
 
 ### GitHub Pages 部署设置
 
@@ -176,10 +185,33 @@ VITE_API_BASE_URL=http://localhost:3000/api
 
 **团队成员注意事项**：PAT是在仓库级别配置的，而不是在单个开发者级别配置的。一旦创建了具有适当权限的PAT并将其作为名为`PAT`的仓库密钥添加，任何克隆仓库并将更改推送到`main`分支的开发者都会自动触发部署工作流，而无需设置自己的PAT。
 
+### 阿里云 OSS 部署设置
+
+要启用自动部署到阿里云 OSS，您需要在仓库中配置以下密钥：
+
+1. 进入仓库设置 > 密钥和变量 > Actions
+2. 创建以下仓库密钥：
+   - `ALIYUN_ACCESS_KEY_ID` - 您的阿里云访问密钥 ID
+   - `ALIYUN_ACCESS_KEY_SECRET` - 您的阿里云访问密钥 Secret
+   - `ALIYUN_OSS_BUCKET` - 您的 OSS bucket 名称
+   - `ALIYUN_OSS_REGION` - 您的 OSS 区域 (例如：`oss-cn-hangzhou`)
+
+此外，您还需要在阿里云 OSS 控制台中配置 bucket 的公共访问和静态网站托管：
+
+1. 在阿里云 OSS 控制台中，导航到您的 bucket
+2. 配置静态网站托管：
+   - 进入"基础设置" > "静态页面"
+   - 设置默认首页为 `index.html`
+   - 设置 404 页面为 `index.html`（Vue Router 的 history 模式需要）
+3. 配置公共访问：
+   - 进入"权限管理" > "Bucket 授权策略"
+   - 设置 bucket ACL 为"公共读"
+   - 或者在"权限管理" > "Bucket 授权策略"中配置更具体的策略
+
 ### 部署流程
 
 1. 每次推送到 `main` 分支都会触发部署工作流
-2. 工作流构建应用程序并将其部署到 GitHub Pages
+2. 工作流构建应用程序并将其部署到相应的平台
 3. 可以在仓库的 Actions 标签页中查看部署状态
 
 ### 手动部署
@@ -187,7 +219,7 @@ VITE_API_BASE_URL=http://localhost:3000/api
 要手动触发部署：
 
 1. 进入仓库的 Actions 标签页
-2. 选择 "Deploy to GitHub Pages" 工作流
+2. 选择所需的工作流 ("Deploy to GitHub Pages" 或 "Deploy to Alibaba Cloud OSS")
 3. 点击 "Run workflow" 并选择要部署的分支
 
 ## 贡献
