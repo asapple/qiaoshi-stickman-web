@@ -24,7 +24,7 @@ const editName = async () => {
     // Note: In a real implementation, you would show a dialog to input the new name
     // For now, we're just showing a confirmation that the feature exists
     showSuccessToast('昵称修改功能已触发')
-  } catch (error) {
+  } catch (_) {
     // 用户取消操作
   }
 }

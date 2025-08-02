@@ -47,7 +47,7 @@ const sendCode = () => {
 }
 
 // Handle login
-const onSubmit = (values: { mobile: string; code: string }) => {
+const onSubmit = ({ mobile, code }: { mobile: string; code: string }) => {
   // In a real app, you would authenticate with the server
   // For this demo, we'll just simulate a successful login
   localStorage.setItem('authToken', 'dummy-token')
