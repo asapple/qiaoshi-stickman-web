@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Dialog } from 'vant'
+import { showConfirmDialog, showSuccessToast } from 'vant'
 import appConfig from '../config/appConfig.json'
 
 const user = ref({
@@ -13,32 +13,40 @@ const onLogout = () => {
   window.location.reload()
 }
 
-const editName = () => {
-  Dialog.prompt({
-    title: '修改昵称',
-    message: '请输入新的昵称',
-    defaultValue: user.value.name,
-    beforeClose: (action: string, done: () => void) => {
-      if (action === 'confirm') {
-        // 这里可以添加验证逻辑
-        done()
-      } else {
-        done()
+const editName = async () => {
+  try {
+    const res = await showConfirmDialog({
+      title: '修改昵称',
+      message: '请输入新的昵称',
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      beforeClose: (action) => {
+        return new Promise((resolve) => {
+          if (action === 'confirm') {
+            // 这里可以添加验证逻辑
+            resolve(true)
+          } else {
+            resolve(false)
+          }
+        })
       }
-    }
-  }).then((res: { value: string }) => {
+    })
+    
     if (res.value) {
       user.value.name = res.value
+      showSuccessToast('昵称修改成功')
     }
-  }).catch(() => {
+  } catch (error) {
     // 用户取消操作
-  })
+  }
 }
 
 const showContactInfo = () => {
-  Dialog.alert({
+  showConfirmDialog({
     title: '联系我们',
-    message: `客服联系电话：${appConfig.customerServicePhone}`
+    message: `客服联系电话：${appConfig.customerServicePhone}`,
+    confirmButtonText: '确定',
+    showCancelButton: false
   })
 }
 </script>
