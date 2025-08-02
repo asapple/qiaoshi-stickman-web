@@ -178,13 +178,7 @@ const cancelAddContact = () => {
       </van-cell-group>
     </div>
     
-    <!-- 第三部分：新联系人 -->
-    <div class="add-section">
-      <div class="section-title">新联系人</div>
-      <div class="add-box">
-        <van-button block round @click="showAddContact">添加新联系人</van-button>
-      </div>
-    </div>
+    
     
     <!-- 添加联系人弹窗 -->
     <van-popup 
@@ -271,7 +265,7 @@ const cancelAddContact = () => {
   color: #333;
 }
 
-.search-section, .contacts-section, .add-section {
+.search-section, .contacts-section {
   background: white;
   margin-bottom: 10px;
 }
@@ -282,10 +276,6 @@ const cancelAddContact = () => {
 
 .search-results {
   padding: 0 10px 10px;
-}
-
-.add-box {
-  padding: 15px 10px;
 }
 
 .add-contact-popup {
