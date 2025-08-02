@@ -1,8 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
 
+// GitHub Pages需要使用子路径，所以使用环境变量或默认值
+const base = import.meta.env.BASE_URL || '/qiaoshi-stickman-web/';
+
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(base),
   routes: [
     {
       path: '/',
