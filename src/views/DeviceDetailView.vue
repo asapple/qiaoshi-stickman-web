@@ -42,14 +42,9 @@ const deviceRecipients = ref<any[]>([])
 const device = ref<any>({})
 
 // Exception images
-const exceptionImages = ref([
-  { id: 1, url: 'https://picsum.photos/300/200?random=1', timestamp: '2025-08-02 14:30' },
-  { id: 2, url: 'https://picsum.photos/300/200?random=2', timestamp: '2025-08-02 15:00' },
-  { id: 3, url: 'https://picsum.photos/300/200?random=3', timestamp: '2025-08-02 15:30' },
-  { id: 4, url: 'https://picsum.photos/300/200?random=4', timestamp: '2025-08-02 16:00' },
-  { id: 5, url: 'https://picsum.photos/300/200?random=5', timestamp: '2025-08-02 16:30' },
-  { id: 6, url: 'https://picsum.photos/300/200?random=6', timestamp: '2025-08-02 17:00' }
-])
+const exceptionImages = ref([])
+// Warnings data
+const warnings = ref([])
 
 // Lightbox for image preview
 const showLightbox = ref(false)
@@ -85,6 +80,38 @@ const getDeviceDetail = async () => {
       }
     } else {
       showFailToast(res.message || '获取设备信息失败')
+    }
+  } catch (err) {
+    console.error('请求失败', err)
+    showFailToast('网络错误，请重试')
+  }
+}
+
+// 获取设备异常事件记录
+const getDeviceWarnings = async () => {
+  const token = getAuthToken()
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/warning/box/${deviceId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': token,
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    const res = await response.json()
+    
+    if (res.code === 200) {
+      warnings.value = res.data
+      
+      // Transform warning data to match the exceptionImages structure
+      exceptionImages.value = warnings.value.map((warning: any) => ({
+        id: warning.id,
+        url: warning.combinedImageUrl || warning.processedImageUrl || warning.imageUrl || 'https://picsum.photos/300/200?random=1',
+        timestamp: warning.time ? new Date(warning.time).toLocaleString() : ''
+      }))
+    } else {
+      showFailToast(res.message || '获取设备历史异常信息失败')
     }
   } catch (err) {
     console.error('请求失败', err)
@@ -363,6 +390,7 @@ const closeImageLightbox = () => {
 onMounted(() => {
   console.log('设备详情页加载，设备ID:', deviceId)
   getDeviceDetail()
+  getDeviceWarnings()
 })
 </script>
 
