@@ -38,20 +38,20 @@ const sendCode = () => {
     showFailToast('请输入手机号')
     return
   }
-  
+
   if (!/^1[3-9]\d{9}$/.test(mobile.value)) {
     showFailToast('请输入正确的手机号')
     return
   }
-  
+
   // Check if we're in the countdown period
   if (isCodeSending.value || countdown.value > 0) {
     return
   }
-  
+
   // Set sending state
   isCodeSending.value = true
-  
+
   // In a real app, you would send a request to get the verification code
   // Replace with your actual API endpoint
   fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/user/verification_code?phone=${mobile.value}`)
@@ -105,10 +105,10 @@ const onSubmit = (values: { mobile: string; code: string }) => {
         console.log("RES:", data);
         const token = data.data; // Assuming token is in data
         // Save user info and token to localStorage
-        localStorage.setItem('userInfo', JSON.stringify({ token: token }));
+        localStorage.setItem('authToken', token);
         showSuccessToast('登录成功！')
         // Print token
-        console.log("登录成功，token:", token); 
+        console.log("登录成功，token:", token);
         router.push('/device')
       } else {
         showFailToast(data.message || '登录失败，请重试')
@@ -126,7 +126,7 @@ const onSubmit = (values: { mobile: string; code: string }) => {
     <div class="header">
       <h1>巧士健康</h1>
     </div>
-    
+
     <div class="form-container">
       <van-form ref="form" @submit="onSubmit">
         <van-cell-group inset>
@@ -146,10 +146,10 @@ const onSubmit = (values: { mobile: string; code: string }) => {
             :rules="codeRules"
           >
             <template #button>
-              <van-button 
-                size="small" 
-                type="primary" 
-                @click="sendCode" 
+              <van-button
+                size="small"
+                type="primary"
+                @click="sendCode"
                 :disabled="isCodeSending || countdown > 0"
               >
                 {{ countdown > 0 ? `${countdown}秒后重发` : '发送验证码' }}
