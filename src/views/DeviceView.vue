@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   NavBar as VanNavBar, 
@@ -8,23 +8,21 @@ import {
   Popup as VanPopup, 
   Field as VanField, 
   Button as VanButton,
-  Toast as VanToast,
+  showSuccessToast,
+  showFailToast,
+  showLoadingToast,
+  closeToast,
   Icon as VanIcon,
   Tabbar as VanTabbar,
-  TabbarItem as VanTabbarItem
+  TabbarItem as VanTabbarItem,
+  Loading as VanLoading
 } from 'vant'
 
 const router = useRouter()
 
-// Sample device data
-const devices = ref([
-  { id: 1, name: '智能手环A', status: 'online' },
-  { id: 2, name: '血压计B', status: 'offline' },
-  { id: 3, name: '血糖仪C', status: 'online' },
-  { id: 4, name: '体脂秤D', status: 'offline' },
-  { id: 5, name: '智能手表E', status: 'online' },
-  { id: 6, name: '体温计F', status: 'maintenance' },
-])
+// Device data from API
+const devices = ref<any[]>([])
+const loading = ref(false)
 
 // Add device popup state
 const showAddDevicePopup = ref(false)
@@ -34,6 +32,47 @@ const newDevice = ref({
   deviceId: '',
   devicePassword: ''
 })
+
+// Get token from localStorage
+const getToken = () => {
+  return localStorage.getItem('authToken') || ''
+}
+
+// Fetch device list
+const fetchDevices = async () => {
+  loading.value = true
+  showLoadingToast('加载中...')
+  try {
+    const token = getToken()
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/box/list_all_boxes_of_user`, {
+      method: 'POST',
+      headers: {
+        'Authorization': token,
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    const result = await response.json()
+    
+    if (result.code === 200) {
+      // Transform data to match UI structure
+      devices.value = result.data.map((box: any) => ({
+        id: box.id,
+        name: box.boxName || `设备 ${box.boxDeviceId}`,
+        status: box.turnOn ? 'online' : 'offline',
+        boxDeviceId: box.boxDeviceId
+      }))
+    } else {
+      showFailToast(result.message || '获取设备列表失败')
+    }
+  } catch (error) {
+    showFailToast('网络错误')
+    console.error('Failed to fetch devices:', error)
+  } finally {
+    loading.value = false
+    closeToast()
+  }
+}
 
 // Navigate to device detail
 const goToDeviceDetail = (deviceId: number) => {
@@ -46,25 +85,49 @@ const showAddDevice = () => {
 }
 
 // Add device function
-const addDevice = () => {
+const addDevice = async () => {
   if (!newDevice.value.deviceId) {
-    VanToast.show('请输入设备ID')
+    showFailToast('请输入设备ID')
     return
   }
   
   if (!newDevice.value.devicePassword) {
-    VanToast.show('请输入设备密码')
+    showFailToast('请输入设备密码')
     return
   }
   
-  // In a real app, you would send this data to the server
-  console.log('Adding device:', newDevice.value)
-  VanToast.show('设备添加成功')
-  
-  // Reset form and close popup
-  newDevice.value.deviceId = ''
-  newDevice.value.devicePassword = ''
-  showAddDevicePopup.value = false
+  try {
+    showLoadingToast('绑定中...')
+    const token = getToken()
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/user/box/add`, {
+      method: 'POST',
+      headers: {
+        'Authorization': token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        boxDeviceId: newDevice.value.deviceId,
+        password: newDevice.value.devicePassword
+      })
+    })
+    
+    const result = await response.json()
+    
+    if (result.code === 200) {
+      showSuccessToast('设备绑定成功')
+      // Reset form and close popup
+      newDevice.value.deviceId = ''
+      newDevice.value.devicePassword = ''
+      showAddDevicePopup.value = false
+      // Refresh device list
+      await fetchDevices()
+    } else {
+      showFailToast(result.message || '绑定失败')
+    }
+  } catch (error) {
+    showFailToast('网络错误，请稍后重试')
+    console.error('Failed to add device:', error)
+  }
 }
 
 // Cancel add device
@@ -102,12 +165,18 @@ const getStatusText = (status: string) => {
       return '未知'
   }
 }
+
+// Load devices on component mount
+onMounted(() => {
+  fetchDevices()
+})
 </script>
 
 <template>
   <div class="device-page">
     <van-nav-bar title="设备管理">
       <template #right>
+        <van-icon name="replay" size="20" @click="fetchDevices" style="margin-right: 15px;" />
         <van-icon name="plus" size="20" @click="showAddDevice" />
       </template>
     </van-nav-bar>
@@ -126,6 +195,18 @@ const getStatusText = (status: string) => {
             <div class="device-status">{{ getStatusText(device.status) }}</div>
           </div>
         </van-grid-item>
+        
+        <!-- Loading state -->
+        <div v-if="loading" class="loading-placeholder">
+          <van-loading size="24px">加载中...</van-loading>
+        </div>
+        
+        <!-- Empty state -->
+        <div v-if="!loading && devices.length === 0" class="empty-placeholder">
+          <van-icon name="info-o" size="48" />
+          <p>暂无设备</p>
+          <van-button round @click="showAddDevice">添加设备</van-button>
+        </div>
       </van-grid>
     </div>
     
@@ -258,5 +339,20 @@ const getStatusText = (status: string) => {
 
 .popup-footer {
   padding: 0 15px 20px;
+}
+
+.loading-placeholder, .empty-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 40px 20px;
+  text-align: center;
+  color: #999;
+}
+
+.empty-placeholder p {
+  margin: 10px 0;
 }
 </style>
