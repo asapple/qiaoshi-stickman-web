@@ -31,6 +31,8 @@ A Vue 3-based web application for managing smart devices with real-time video st
 
 - Node.js (version specified in package.json)
 - npm or yarn
+- Java JDK 8 or higher (for backend testing environment)
+- IDE with Java support (IntelliJ IDEA recommended)
 
 ### Installation
 
@@ -42,6 +44,30 @@ cd qiaoshi-stickman-web
 # Install dependencies
 npm install
 ```
+
+### Backend Testing Environment Setup
+
+To run the full application with backend services:
+
+1. Clone the backend repository:
+   ```bash
+   git clone https://github.com/hfqsjk/qiaoshi-system
+   ```
+
+2. Open the project in IntelliJ IDEA:
+   - Launch IntelliJ IDEA
+   - Select "Open" and navigate to the `qiaoshi-system` directory
+   - Let IntelliJ IDEA import the Maven project
+
+3. Configure the database:
+   - The test environment (MySQL and Redis) is already deployed on Alibaba Cloud ECS
+   - Check the ECS configuration in `src/main/resources/application.properties`
+
+4. Run the backend application:
+   - Find the main application class (usually named `Application` or similar)
+   - Right-click and select "Run" or use the green play button
+
+5. The backend API will be available at `http://localhost:8080` by default
 
 ### Development
 

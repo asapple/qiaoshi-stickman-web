@@ -31,6 +31,8 @@
 
 - Node.js (版本见 package.json)
 - npm 或 yarn
+- Java JDK 8 或更高版本（用于后端测试环境）
+- 支持Java的IDE（推荐IntelliJ IDEA）
 
 ### 安装
 
@@ -42,6 +44,30 @@ cd qiaoshi-stickman-web
 # 安装依赖
 npm install
 ```
+
+### 后端测试环境搭建
+
+要运行包含后端服务的完整应用程序：
+
+1. 克隆后端仓库：
+   ```bash
+   git clone https://github.com/hfqsjk/qiaoshi-system
+   ```
+
+2. 在IntelliJ IDEA中打开项目：
+   - 启动IntelliJ IDEA
+   - 选择"Open"并导航到`qiaoshi-system`目录
+   - 让IntelliJ IDEA导入Maven项目
+
+3. 配置数据库：
+   - 测试环境（MySQL和Redis）已经在阿里云ECS上部署好了
+   - ECS配置查阅`src/main/resources/application.properties`
+
+4. 运行后端应用程序：
+   - 找到主应用程序类（通常命名为`Application`或类似名称）
+   - 右键单击并选择"Run"或使用绿色运行按钮
+
+5. 后端API默认将在`http://localhost:8080`上可用
 
 ### 开发
 
