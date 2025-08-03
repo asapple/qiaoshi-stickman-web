@@ -10,7 +10,10 @@ import {
   Grid as VanGrid,
   GridItem as VanGridItem,
   Image as VanImage,
-  Icon as VanIcon
+  Icon as VanIcon,
+  Button as VanButton,
+  showSuccessToast,
+  showFailToast
 } from 'vant'
 import VideoPlayer from '../components/VideoPlayer.vue'
 
@@ -32,12 +35,12 @@ const passwordForm = ref({
 // Notifier management popup
 const showNotifierPopup = ref(false)
 const searchQuery = ref('')
-const notifiers = ref([
-  { id: 1, name: '张三', phone: '13800138001', isNotifier: true },
-  { id: 2, name: '李四', phone: '13800138002', isNotifier: true },
-  { id: 3, name: '王五', phone: '13800138003', isNotifier: false },
-  { id: 4, name: '赵六', phone: '13800138004', isNotifier: false }
-])
+// 联系人列表
+const notifiers = ref<any[]>([])
+// 设备已绑定联系人列表
+const deviceRecipients = ref<any[]>([])
+// 设备信息
+const device = ref<any>({})
 
 // Exception images
 const exceptionImages = ref([
@@ -52,6 +55,161 @@ const exceptionImages = ref([
 // Lightbox for image preview
 const showLightbox = ref(false)
 const selectedImage = ref<{ id: number; url: string; timestamp: string } | null>(null)
+
+// 获取认证token
+const getAuthToken = () => {
+  return localStorage.getItem('authToken') || ''
+}
+
+// 获取所有联系人
+const getRecipients = async () => {
+  const token = getAuthToken()
+  console.log('Token:', token)
+  
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/recipient_directory`, {
+      method: 'GET',
+      headers: {
+        'Authorization': token,
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    const res = await response.json()
+    console.log('获取联系人列表:', res)
+    
+    if (res.code === 200) {
+      notifiers.value = res.data
+      // 更新联系人列表中的绑定状态
+      updateNotifierBindingStatus()
+    } else {
+      showFailToast(res.message || '获取联系人失败')
+    }
+  } catch (err) {
+    console.error('请求失败', err)
+    showFailToast('网络错误，请重试')
+  }
+}
+
+// 更新联系人列表中的绑定状态
+const updateNotifierBindingStatus = () => {
+  notifiers.value = notifiers.value.map(notifier => ({
+    ...notifier,
+    isNotifier: deviceRecipients.value.some((recipient: any) => recipient.phone === notifier.phone)
+  }))
+}
+
+// 获取设备已绑定联系人
+const getDeviceRecipients = async (deviceId: string) => {
+  const token = getAuthToken()
+  
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/recipient?boxId=${deviceId}&page=1&size=10`, {
+      method: 'GET',
+      headers: {
+        'Authorization': token,
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    const res = await response.json()
+    
+    if (res.code === 200) {
+      console.log(res.data.records)
+      deviceRecipients.value = res.data.records
+      // 更新联系人列表中的绑定状态
+      updateNotifierBindingStatus()
+    } else {
+      showFailToast(res.message || '获取设备通知人失败')
+    }
+  } catch (err) {
+    console.error('请求失败', err)
+    showFailToast('网络错误，请重试')
+  }
+}
+
+// 绑定联系人到设备
+const addRecipientToDeviceRecipients = async (recipient: any) => {
+  const token = getAuthToken()
+  
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/recipient`, {
+      method: 'POST',
+      headers: {
+        'Authorization': token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        boxId: parseInt(deviceId as string),
+        name: recipient.name,
+        phone: recipient.phoneNumber
+      })
+    })
+    
+    const res = await response.json()
+    
+    if (res.code === 200) {
+      console.log(res)
+      showSuccessToast('绑定成功')
+      // 更新设备绑定联系人列表
+      await getDeviceRecipients(deviceId as string)
+    } else {
+      showFailToast(res.message || '绑定失败')
+    }
+  } catch (err) {
+    showFailToast('网络错误，请重试')
+  }
+}
+
+// 取消绑定联系人
+const removeDeviceRecipient = async (index: number) => {
+  const recipientId = parseInt(deviceRecipients.value[index].id, 10)
+  const token = getAuthToken()
+
+  // 显示确认对话框
+  if (confirm('你确定要解绑这个设备通知人吗？')) {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/recipient/${recipientId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': token,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      const res = await response.json()
+      
+      if (res.code === 200) {
+        // 删除成功后，从数组中移除该条记录
+        deviceRecipients.value.splice(index, 1)
+        showSuccessToast('解绑成功')
+        // 更新联系人列表中的绑定状态
+        updateNotifierBindingStatus()
+      } else {
+        showFailToast('解绑失败')
+      }
+    } catch (err) {
+      showFailToast('请求失败')
+    }
+  }
+}
+
+// Toggle notifier status
+const toggleNotifier = async (phone: string) => {
+  const notifier = notifiers.value.find(n => n.phone === phone)
+  if (notifier) {
+    if (notifier.isNotifier) {
+      // 解绑操作
+      const index = deviceRecipients.value.findIndex((recipient: any) => recipient.phone === phone)
+      if (index !== -1) {
+        await removeDeviceRecipient(index)
+      }
+    } else {
+      // 绑定操作
+      await addRecipientToDeviceRecipients(notifier)
+    }
+  }
+}
 
 // Toggle stickman mode
 const toggleStickmanMode = (value: boolean) => {
@@ -116,8 +274,11 @@ const cancelPasswordChange = () => {
 }
 
 // Show notifier management popup
-const showNotifierManagement = () => {
+const showNotifierManagement = async () => {
   showNotifierPopup.value = true
+  // 先获取设备已绑定联系人，再获取所有联系人
+  await getDeviceRecipients(deviceId as string)
+  await getRecipients()
 }
 
 // Filter notifiers based on search
@@ -130,14 +291,6 @@ const filteredNotifiers = () => {
     notifier.name.includes(searchQuery.value) ||
     notifier.phone.includes(searchQuery.value)
   )
-}
-
-// Toggle notifier status
-const toggleNotifier = (id: number) => {
-  const notifier = notifiers.value.find(n => n.id === id)
-  if (notifier) {
-    notifier.isNotifier = !notifier.isNotifier
-  }
 }
 
 // Close notifier management popup
@@ -335,7 +488,7 @@ onMounted(() => {
             <h3>已有通知人</h3>
             <div
               v-for="notifier in filteredNotifiers().filter(n => n.isNotifier)"
-              :key="notifier.id"
+              :key="notifier.phone"
               class="notifier-item"
             >
               <div class="notifier-info">
@@ -344,7 +497,7 @@ onMounted(() => {
               </div>
               <van-button
                 size="small"
-                @click="toggleNotifier(notifier.id)"
+                @click="toggleNotifier(notifier.phone)"
               >
                 取消通知
               </van-button>
@@ -364,7 +517,7 @@ onMounted(() => {
             <h3>添加新通知人</h3>
             <div
               v-for="notifier in filteredNotifiers().filter(n => !n.isNotifier)"
-              :key="notifier.id"
+              :key="notifier.phone"
               class="notifier-item"
             >
               <div class="notifier-info">
@@ -374,7 +527,7 @@ onMounted(() => {
               <van-button
                 type="primary"
                 size="small"
-                @click="toggleNotifier(notifier.id)"
+                @click="toggleNotifier(notifier.phone)"
               >
                 添加通知
               </van-button>
