@@ -60,6 +60,38 @@ const getAuthToken = () => {
   return localStorage.getItem('authToken') || ''
 }
 
+// 获取设备详细信息
+const getDeviceDetail = async () => {
+  const token = getAuthToken()
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/box/${deviceId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': token,
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    const res = await response.json()
+    
+    if (res.code === 200) {
+      device.value = res.data
+      // 设置表单初始值
+      if (device.value.wifiName) {
+        wifiForm.value.ssid = device.value.wifiName
+      }
+      if (device.value.wifiPassword) {
+        wifiForm.value.password = device.value.wifiPassword
+      }
+    } else {
+      showFailToast(res.message || '获取设备信息失败')
+    }
+  } catch (err) {
+    console.error('请求失败', err)
+    showFailToast('网络错误，请重试')
+  }
+}
+
 // 获取所有联系人
 const getRecipients = async () => {
   const token = getAuthToken()
@@ -233,7 +265,7 @@ const showWifiConfiguration = () => {
 }
 
 // Configure WIFI
-const configureWifi = () => {
+const configureWifi = async () => {
   if (!wifiForm.value.ssid) {
     VanToast.show('请输入WIFI名称')
     return
@@ -244,18 +276,43 @@ const configureWifi = () => {
     return
   }
 
-  // In a real app, you would send this to the server
-  console.log('配置WIFI:', {
-    ssid: wifiForm.value.ssid,
-    password: wifiForm.value.password
-  })
+  const token = getAuthToken()
+  
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/box/${deviceId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ...device.value,
+        wifiName: wifiForm.value.ssid,
+        wifiPassword: wifiForm.value.password
+      })
+    })
 
-  VanToast.show('WIFI配置成功')
-
-  // Reset form and close popup
-  wifiForm.value.ssid = ''
-  wifiForm.value.password = ''
-  showWifiPopup.value = false
+    const res = await response.json()
+    
+    if (res.code === 200) {
+      console.log("RES:", res)
+      VanToast.show('修改设备配置信息成功')
+      
+      // 更新本地设备信息
+      device.value.wifiName = wifiForm.value.ssid
+      device.value.wifiPassword = wifiForm.value.password
+      
+      // Reset form and close popup
+      wifiForm.value.ssid = ''
+      wifiForm.value.password = ''
+      showWifiPopup.value = false
+    } else {
+      VanToast.show(res.message || '修改设备配置信息失败')
+    }
+  } catch (err) {
+    console.error('请求失败', err)
+    VanToast.show('网络错误，请重试')
+  }
 }
 
 // Cancel WIFI configuration
@@ -305,6 +362,7 @@ const closeImageLightbox = () => {
 // Initialize
 onMounted(() => {
   console.log('设备详情页加载，设备ID:', deviceId)
+  getDeviceDetail()
 })
 </script>
 
