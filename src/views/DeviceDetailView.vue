@@ -24,12 +24,11 @@ const deviceId = route.params.id || '1'
 const stickmanMode = ref(false)
 const anonymizeFaces = ref(false)
 
-// Password change popup
-const showPasswordPopup = ref(false)
-const passwordForm = ref({
-  oldPassword: '',
-  newPassword: '',
-  confirmPassword: ''
+// WIFI configuration popup
+const showWifiPopup = ref(false)
+const wifiForm = ref({
+  ssid: '',
+  password: ''
 })
 
 // Notifier management popup
@@ -228,49 +227,42 @@ const toggleAnonymizeFaces = (value: boolean) => {
   }
 }
 
-// Show password change popup
-const showPasswordChange = () => {
-  showPasswordPopup.value = true
+// Show WIFI configuration popup
+const showWifiConfiguration = () => {
+  showWifiPopup.value = true
 }
 
-// Change password
-const changePassword = () => {
-  if (!passwordForm.value.oldPassword) {
-    VanToast.show('请输入旧密码')
+// Configure WIFI
+const configureWifi = () => {
+  if (!wifiForm.value.ssid) {
+    VanToast.show('请输入WIFI名称')
     return
   }
 
-  if (!passwordForm.value.newPassword) {
-    VanToast.show('请输入新密码')
-    return
-  }
-
-  if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-    VanToast.show('新密码与确认密码不一致')
+  if (!wifiForm.value.password) {
+    VanToast.show('请输入WIFI密码')
     return
   }
 
   // In a real app, you would send this to the server
-  console.log('修改密码:', {
-    oldPassword: passwordForm.value.oldPassword,
-    newPassword: passwordForm.value.newPassword
+  console.log('配置WIFI:', {
+    ssid: wifiForm.value.ssid,
+    password: wifiForm.value.password
   })
 
-  VanToast.show('密码修改成功')
+  VanToast.show('WIFI配置成功')
 
   // Reset form and close popup
-  passwordForm.value.oldPassword = ''
-  passwordForm.value.newPassword = ''
-  passwordForm.value.confirmPassword = ''
-  showPasswordPopup.value = false
+  wifiForm.value.ssid = ''
+  wifiForm.value.password = ''
+  showWifiPopup.value = false
 }
 
-// Cancel password change
-const cancelPasswordChange = () => {
-  passwordForm.value.oldPassword = ''
-  passwordForm.value.newPassword = ''
-  passwordForm.value.confirmPassword = ''
-  showPasswordPopup.value = false
+// Cancel WIFI configuration
+const cancelWifiConfiguration = () => {
+  wifiForm.value.ssid = ''
+  wifiForm.value.password = ''
+  showWifiPopup.value = false
 }
 
 // Show notifier management popup
@@ -352,9 +344,9 @@ onMounted(() => {
           />
         </div>
 
-        <!-- Password Modification -->
-        <div class="control-item action-item" @click="showPasswordChange">
-          <span class="control-label">修改密码</span>
+        <!-- WIFI Configuration -->
+        <div class="control-item action-item" @click="showWifiConfiguration">
+          <span class="control-label">配置WIFI</span>
           <van-icon name="arrow" />
         </div>
 
@@ -389,40 +381,31 @@ onMounted(() => {
       </van-grid>
     </div>
 
-    <!-- Password Change Popup -->
+    <!-- WIFI Configuration Popup -->
     <van-popup
-      v-model:show="showPasswordPopup"
+      v-model:show="showWifiPopup"
       position="bottom"
       :style="{ height: '50%' }"
       round
     >
-      <div class="password-popup">
+      <div class="wifi-popup">
         <div class="popup-header">
-          <h2>修改设备密码</h2>
+          <h2>配置WIFI</h2>
         </div>
 
         <div class="popup-content">
           <van-field
-            v-model="passwordForm.oldPassword"
-            type="password"
-            label="旧密码"
-            placeholder="请输入旧密码"
+            v-model="wifiForm.ssid"
+            label="WIFI名称"
+            placeholder="请输入WIFI名称"
             clearable
           />
 
           <van-field
-            v-model="passwordForm.newPassword"
+            v-model="wifiForm.password"
             type="password"
-            label="新密码"
-            placeholder="请输入新密码"
-            clearable
-          />
-
-          <van-field
-            v-model="passwordForm.confirmPassword"
-            type="password"
-            label="确认新密码"
-            placeholder="请再次输入新密码"
+            label="WIFI密码"
+            placeholder="请输入WIFI密码"
             clearable
           />
         </div>
@@ -431,7 +414,7 @@ onMounted(() => {
           <van-button
             block
             round
-            @click="cancelPasswordChange"
+            @click="cancelWifiConfiguration"
             style="margin: 0 10px 10px 10px;"
           >
             取消
@@ -440,7 +423,7 @@ onMounted(() => {
             type="primary"
             block
             round
-            @click="changePassword"
+            @click="configureWifi"
             style="margin: 0 10px 10px 10px;"
           >
             确认
@@ -631,8 +614,8 @@ onMounted(() => {
   color: #999;
 }
 
-/* Password Popup Styles */
-.password-popup, .notifier-popup {
+/* WIFI Popup Styles */
+.wifi-popup, .notifier-popup {
   height: 100%;
   display: flex;
   flex-direction: column;
