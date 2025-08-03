@@ -184,6 +184,7 @@ onMounted(() => {
           <span class="control-label">火柴人模式</span>
           <van-switch
             v-model="stickmanMode"
+            :disabled="anonymizeFaces"
             size="20px"
             @change="toggleStickmanMode"
           />
