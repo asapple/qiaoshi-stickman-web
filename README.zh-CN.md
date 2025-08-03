@@ -129,10 +129,20 @@ src/
 
 ## 环境变量
 
-在项目根目录创建 `.env` 文件：
+项目通过 `.env` 文件支持不同的环境：
 
+- `.env` - 默认/备用环境变量
+- `.env.development` - 开发环境 (运行 `npm run dev` 时使用)
+- `.env.production` - 生产环境 (运行 `npm run build` 时使用)
+
+示例 `.env.development`:
 ```
-VITE_API_BASE_URL=http://localhost:3000/api
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+示例 `.env.production`:
+```
+VITE_API_BASE_URL=https://your-production-domain.com
 ```
 
 ## CI/CD 部署

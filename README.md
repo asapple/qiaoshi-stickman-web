@@ -129,10 +129,20 @@ src/
 
 ## Environment Variables
 
-Create a `.env` file in the project root:
+The project supports different environments through `.env` files:
 
+- `.env` - Default/fallback environment variables
+- `.env.development` - Development environment (used when running `npm run dev`)
+- `.env.production` - Production environment (used when running `npm run build`)
+
+Example `.env.development`:
 ```
-VITE_API_BASE_URL=http://localhost:3000/api
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+Example `.env.production`:
+```
+VITE_API_BASE_URL=https://your-production-domain.com
 ```
 
 ## CI/CD Deployment
