@@ -6,14 +6,14 @@ import {
   Switch as VanSwitch,
   Popup as VanPopup,
   Field as VanField,
-  Toast as VanToast,
   Grid as VanGrid,
   GridItem as VanGridItem,
   Image as VanImage,
   Icon as VanIcon,
   Button as VanButton,
   showSuccessToast,
-  showFailToast
+  showFailToast,
+  showToast
 } from 'vant'
 import VideoPlayer from '../components/VideoPlayer.vue'
 
@@ -267,12 +267,12 @@ const showWifiConfiguration = () => {
 // Configure WIFI
 const configureWifi = async () => {
   if (!wifiForm.value.ssid) {
-    VanToast.show('请输入WIFI名称')
+    showToast('请输入WIFI名称')
     return
   }
 
   if (!wifiForm.value.password) {
-    VanToast.show('请输入WIFI密码')
+    showToast('请输入WIFI密码')
     return
   }
 
@@ -296,7 +296,7 @@ const configureWifi = async () => {
     
     if (res.code === 200) {
       console.log("RES:", res)
-      VanToast.show('修改设备配置信息成功')
+      showSuccessToast('修改设备配置信息成功')
       
       // 更新本地设备信息
       device.value.wifiName = wifiForm.value.ssid
@@ -307,11 +307,11 @@ const configureWifi = async () => {
       wifiForm.value.password = ''
       showWifiPopup.value = false
     } else {
-      VanToast.show(res.message || '修改设备配置信息失败')
+      showFailToast(res.message || '修改设备配置信息失败')
     }
   } catch (err) {
     console.error('请求失败', err)
-    VanToast.show('网络错误，请重试')
+    showFailToast('网络错误，请重试')
   }
 }
 
