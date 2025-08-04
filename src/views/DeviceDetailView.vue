@@ -42,7 +42,7 @@ const deviceRecipients = ref<any[]>([])
 const device = ref<any>({})
 
 // Exception images
-const exceptionImages = ref([])
+const exceptionImages = ref<Array<{ id: any; url: any; timestamp: string }>>([])
 // Warnings data
 const warnings = ref([])
 
