@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { 
   NavBar as VanNavBar,
   Field as VanField,
   Button as VanButton,
   Toast as VanToast,
+  showSuccessToast,
+  showFailToast,
+  showLoadingToast,
+  closeToast,
   Icon as VanIcon,
   Cell as VanCell,
   CellGroup as VanCellGroup,
@@ -14,11 +18,7 @@ import {
 } from 'vant'
 
 // 联系人数据
-const contacts = ref([
-  { id: 1, name: '李四', phone: '13800138001' },
-  { id: 2, name: '王五', phone: '13800138002' },
-  { id: 3, name: '赵六', phone: '13800138003' }
-])
+const contacts = ref<any[]>([])
 
 // 搜索相关
 const searchKeyword = ref('')
@@ -32,29 +32,85 @@ const newContact = ref({
   code: ''
 })
 
+// 倒计时相关
+const isCodeSending = ref(false)
+const countdown = ref(0)
+
+// 获取token
+const getToken = () => {
+  return localStorage.getItem('authToken') || ''
+}
+
+// 获取联系人列表
+const fetchContacts = async () => {
+  try {
+    const token = getToken()
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/recipient_directory`, {
+      method: 'GET',
+      headers: {
+        'Authorization': token
+      }
+    })
+    
+    const result = await response.json()
+    
+    if (result.code === 200) {
+      contacts.value = result.data.map((item: any) => ({
+        id: item.recipientId,
+        name: item.name,
+        phone: item.phoneNumber
+      }))
+    } else {
+      showFailToast(result.message || '获取联系人失败')
+    }
+  } catch (error) {
+    showFailToast('网络错误')
+    console.error('Failed to fetch contacts:', error)
+  }
+}
+
 // 搜索联系人
 const searchContacts = () => {
   if (!searchKeyword.value) {
-    VanToast.show('请输入搜索关键词')
+    showFailToast('请输入搜索关键词')
     return
   }
   
-  // 这里应该调用后端API进行搜索
-  // 目前使用模拟数据
+  // 在本地数据中搜索
   searchResults.value = contacts.value.filter(contact => 
     contact.name.includes(searchKeyword.value) || 
     contact.phone.includes(searchKeyword.value)
   )
   
   if (searchResults.value.length === 0) {
-    VanToast.show('未找到匹配的联系人')
+    showFailToast('未找到匹配的联系人')
   }
 }
 
 // 删除联系人
-const deleteContact = (id: number) => {
-  contacts.value = contacts.value.filter(contact => contact.id !== id)
-  VanToast.show('联系人已删除')
+const deleteContact = async (id: number) => {
+  try {
+    const token = getToken()
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/recipient_directory/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': token
+      }
+    })
+    
+    const result = await response.json()
+    
+    if (result.code === 200) {
+      // 从本地列表中移除
+      contacts.value = contacts.value.filter(contact => contact.id !== id)
+      showSuccessToast('联系人已删除')
+    } else {
+      showFailToast(result.message || '删除失败')
+    }
+  } catch (error) {
+    showFailToast('网络错误')
+    console.error('Failed to delete contact:', error)
+  }
 }
 
 // 显示添加联系人弹窗
@@ -64,52 +120,127 @@ const showAddContact = () => {
 
 // 发送验证码
 const sendVerificationCode = () => {
+  console.log('Sending verification code...')
   if (!newContact.value.phone) {
-    VanToast.show('请输入手机号')
+    showFailToast('请输入手机号')
     return
   }
-  
-  // 这里应该调用后端API发送验证码
-  // 模拟发送验证码
-  newContact.value.code = '123456'
-  VanToast.show('验证码已发送')
+
+  if (!/^1[3-9]\d{9}$/.test(newContact.value.phone)) {
+    showFailToast('请输入正确的手机号')
+    return
+  }
+
+  // Check if we're in the countdown period
+  if (isCodeSending.value || countdown.value > 0) {
+    console.log('Code sending is in cooldown period')
+    return
+  }
+
+  // Set sending state
+  isCodeSending.value = true
+
+  fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/recipient_directory/verification_code?phone=${newContact.value.phone}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': getToken()
+    }
+  })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Verification code response:', data)
+      if (data.code === 200) {
+        showSuccessToast('验证码已发送')
+        // Start countdown
+        startCountdown()
+      } else {
+        showFailToast(data.message || '发送失败，请重试')
+        isCodeSending.value = false
+      }
+    })
+    .catch(error => {
+      console.error('Error sending code:', error)
+      showFailToast('网络错误，请重试')
+      isCodeSending.value = false
+    })
+}
+
+// Start 60-second countdown
+const startCountdown = () => {
+  countdown.value = 60
+  const timer = setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) {
+      clearInterval(timer)
+      isCodeSending.value = false
+    }
+  }, 1000)
 }
 
 // 添加新联系人
-const addContact = () => {
+const addContact = async () => {
+  console.log('Attempting to add contact...')
+  console.log('Contact data:', newContact.value)
+  
   if (!newContact.value.name) {
-    VanToast.show('请输入昵称')
+    showFailToast('请输入昵称')
+    console.log('Validation failed: name is empty')
     return
   }
   
   if (!newContact.value.phone) {
-    VanToast.show('请输入手机号')
+    showFailToast('请输入手机号')
+    console.log('Validation failed: phone is empty')
     return
   }
   
   if (!newContact.value.code) {
-    VanToast.show('请输入验证码')
+    showFailToast('请输入验证码')
+    console.log('Validation failed: code is empty')
     return
   }
   
-  // 这里应该验证验证码是否正确
-  // 模拟验证通过
-  
-  // 添加到联系人列表
-  const newId = contacts.value.length > 0 ? Math.max(...contacts.value.map(c => c.id)) + 1 : 1
-  contacts.value.push({
-    id: newId,
-    name: newContact.value.name,
-    phone: newContact.value.phone
-  })
-  
-  VanToast.show('联系人添加成功')
-  
-  // 重置表单并关闭弹窗
-  newContact.value.name = ''
-  newContact.value.phone = ''
-  newContact.value.code = ''
-  showAddContactPopup.value = false
+  try {
+    showLoadingToast('添加中...')
+    const token = getToken()
+    console.log('Sending request with token:', token)
+    
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/recipient_directory`, {
+      method: 'POST',
+      headers: {
+        'Authorization': token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: newContact.value.name,
+        phoneNumber: newContact.value.phone,
+        verificationCode: newContact.value.code
+      })
+    })
+    
+    console.log('Response received:', response)
+    const result = await response.json()
+    console.log('Result:', result)
+    
+    if (result.code === 200) {
+      showSuccessToast('联系人添加成功')
+      // 刷新联系人列表
+      await fetchContacts()
+      
+      // 重置表单并关闭弹窗
+      newContact.value.name = ''
+      newContact.value.phone = ''
+      newContact.value.code = ''
+      showAddContactPopup.value = false
+    } else {
+      showFailToast(result.message || '添加失败')
+    }
+  } catch (error) {
+    showFailToast('网络错误，请稍后重试')
+    console.error('Failed to add contact:', error)
+  } finally {
+    closeToast()
+  }
 }
 
 // 取消添加联系人
@@ -119,6 +250,11 @@ const cancelAddContact = () => {
   newContact.value.code = ''
   showAddContactPopup.value = false
 }
+
+// 页面加载时获取联系人列表
+onMounted(() => {
+  fetchContacts()
+})
 </script>
 
 <template>
@@ -178,8 +314,6 @@ const cancelAddContact = () => {
       </van-cell-group>
     </div>
     
-    
-    
     <!-- 添加联系人弹窗 -->
     <van-popup 
       v-model:show="showAddContactPopup" 
@@ -215,7 +349,13 @@ const cancelAddContact = () => {
             clearable
           >
             <template #button>
-              <van-button size="small" @click="sendVerificationCode">发送</van-button>
+              <van-button 
+                size="small" 
+                @click="sendVerificationCode"
+                :disabled="isCodeSending || countdown > 0"
+              >
+                {{ countdown > 0 ? `${countdown}秒后重发` : '发送' }}
+              </van-button>
             </template>
           </van-field>
         </div>
