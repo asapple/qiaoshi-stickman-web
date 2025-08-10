@@ -40,13 +40,19 @@ const router = createRouter({
       component: () => import('../views/ContactsView.vue'),
       meta: { requiresAuth: true }
     },
+    {
+      path: '/video-test',
+      name: 'videoTest',
+      component: () => import('../views/VideoTestView.vue'),
+      meta: { requiresAuth: true }
+    },
   ],
 })
 
 // Navigation guard
 router.beforeEach((to, from, next) => {
   const isAuthenticated = !!localStorage.getItem('authToken')
-  
+
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login')
   } else {

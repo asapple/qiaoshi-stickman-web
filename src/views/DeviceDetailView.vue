@@ -13,12 +13,17 @@ import {
   Button as VanButton,
   showSuccessToast,
   showFailToast,
-  showToast
+  showToast,
+  showLoadingToast,
+  closeToast
 } from 'vant'
 import VideoPlayer from '../components/VideoPlayer.vue'
 
 const route = useRoute()
 const deviceId = route.params.id || '1'
+
+// Video stream URL
+const videoStreamUrl = ref('')
 
 // Feature toggles
 const stickmanMode = ref(false)
@@ -59,7 +64,7 @@ const getAuthToken = () => {
 const getDeviceDetail = async () => {
   const token = getAuthToken()
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/box/${deviceId}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/play?deviceId=${deviceId}&protocol=HTTPS-FLV`, {
       method: 'GET',
       headers: {
         'Authorization': token,
@@ -71,12 +76,21 @@ const getDeviceDetail = async () => {
     
     if (res.code === 200) {
       device.value = res.data
+      console.log("获取流地址:",device.data)
       // 设置表单初始值
       if (device.value.wifiName) {
         wifiForm.value.ssid = device.value.wifiName
       }
       if (device.value.wifiPassword) {
         wifiForm.value.password = device.value.wifiPassword
+      }
+      
+      // 设置视频流URL（如果有的话）
+      if (device.value.videoStreamUrl) {
+        videoStreamUrl.value = device.value.videoStreamUrl
+      } else {
+        // 使用默认测试流
+        videoStreamUrl.value = 'https://asdasdnaoshidhaosi.icu/live/stream.live.flv'
       }
     } else {
       showFailToast(res.message || '获取设备信息失败')
@@ -270,8 +284,40 @@ const toggleNotifier = async (phone: string) => {
 }
 
 // Toggle stickman mode
-const toggleStickmanMode = (value: boolean) => {
-  stickmanMode.value = value
+const toggleStickmanMode = async (value: boolean) => {
+  const token = getAuthToken()
+  
+  try {
+    if(value){
+      // 发送火柴人模式切换请求
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/inference?deviceId=${deviceId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': token,
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    const res = await response.json()
+    if (res.code === 200) {
+      stickmanMode.value = value
+    } else {
+      // 如果请求失败，恢复开关状态
+      stickmanMode.value = !value
+      videoStreamUrl.value = `${import.meta.env.WVP_URL}/inference/${deviceId}.live.flv`
+      console.log("火柴人url:",videoStreamUrl.value)
+      }
+    } else {
+      videoStreamUrl.value = null
+    }
+  } catch (err) {
+    // 如果请求失败，恢复开关状态
+    stickmanMode.value = !value
+    console.error('火柴人模式切换请求失败:', err)
+    showFailToast('网络错误，请重试')
+  } finally {
+    closeToast()
+  }
   console.log('火柴人模式状态:', value ? 'on' : 'off')
 }
 
@@ -283,6 +329,10 @@ const toggleAnonymizeFaces = (value: boolean) => {
   // If anonymize faces is turned on, also turn on stickman mode
   if (value && !stickmanMode.value) {
     stickmanMode.value = true
+    videoStreamUrl.value = `${import.meta.env.WVP_URL}/inference/${deviceId}_hidden.live.flv`
+    console.log("隐去人像url:",videoStreamUrl.value)
+  } else {
+    videoStreamUrl.value = null
   }
 }
 
@@ -386,6 +436,20 @@ const closeImageLightbox = () => {
   selectedImage.value = null
 }
 
+// Video player event handlers
+const onVideoPlay = () => {
+  console.log('视频开始播放')
+}
+
+const onVideoPause = () => {
+  console.log('视频已暂停')
+}
+
+const onVideoError = (error: string) => {
+  console.error('视频播放错误:', error)
+  showFailToast('视频播放失败: ' + error)
+}
+
 // Initialize
 onMounted(() => {
   console.log('设备详情页加载，设备ID:', deviceId)
@@ -403,7 +467,13 @@ onMounted(() => {
     />
 
     <!-- Top: Video Player -->
-    <VideoPlayer height="250px" />
+    <VideoPlayer 
+      height="250px" 
+      :video-url="videoStreamUrl"
+      @play="onVideoPlay"
+      @pause="onVideoPause"
+      @error="onVideoError"
+    />
 
     <!-- Middle: Device Controls -->
     <div class="device-controls-card">

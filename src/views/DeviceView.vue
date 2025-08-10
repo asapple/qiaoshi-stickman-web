@@ -79,6 +79,11 @@ const goToDeviceDetail = (deviceId: number) => {
   router.push(`/device/${deviceId}`)
 }
 
+// Navigate to video test
+const goToVideoTest = () => {
+  router.push('/video-test')
+}
+
 // Show add device popup
 const showAddDevice = () => {
   showAddDevicePopup.value = true
@@ -207,6 +212,15 @@ onMounted(() => {
           <p>暂无设备</p>
           <van-button round @click="showAddDevice">添加设备</van-button>
         </div>
+        
+        <!-- Test Video Player Button -->
+        <van-grid-item>
+          <div class="device-card test-card" @click="goToVideoTest">
+            <van-icon name="video-o" size="48" color="#007bff" />
+            <h3>视频播放器测试</h3>
+            <p>测试Jessibuca播放器功能</p>
+          </div>
+        </van-grid-item>
       </van-grid>
     </div>
     
