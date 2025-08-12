@@ -20,7 +20,9 @@ import {
 import VideoPlayer from '../components/VideoPlayer.vue'
 
 const route = useRoute()
-const deviceId = route.params.id || '1'
+const deviceId = route.query.deviceId || ''
+const boxId = route.query.boxId || ''
+console.log("deviceId:",deviceId,"boxId:",boxId)
 
 // Video stream URL
 const videoStreamUrl = ref('')
@@ -64,7 +66,7 @@ const getAuthToken = () => {
 const getDeviceDetail = async () => {
   const token = getAuthToken()
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/play?deviceId=${deviceId}&protocol=HTTPS-FLV`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/play?deviceId=${deviceId}&protocol=HTTPS_FLV`, {
       method: 'GET',
       headers: {
         'Authorization': token,
@@ -76,7 +78,7 @@ const getDeviceDetail = async () => {
     
     if (res.code === 200) {
       device.value = res.data
-      console.log("获取流地址:",device.data)
+      console.log("获取流地址:",res.data)
       // 设置表单初始值
       if (device.value.wifiName) {
         wifiForm.value.ssid = device.value.wifiName
@@ -86,14 +88,15 @@ const getDeviceDetail = async () => {
       }
       
       // 设置视频流URL（如果有的话）
-      if (device.value.videoStreamUrl) {
-        videoStreamUrl.value = device.value.videoStreamUrl
+      if (device.value) {
+        videoStreamUrl.value = device.value.replace(/^http:\/\/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/, 'https://asdasdnaoshidhaosi.icu')
+        console.log("流地址：",videoStreamUrl.value)
       } else {
         // 使用默认测试流
         videoStreamUrl.value = 'https://asdasdnaoshidhaosi.icu/live/stream.live.flv'
       }
     } else {
-      showFailToast(res.message || '获取设备信息失败')
+      showFailToast('获取设备信息失败')
     }
   } catch (err) {
     console.error('请求失败', err)
@@ -105,7 +108,7 @@ const getDeviceDetail = async () => {
 const getDeviceWarnings = async () => {
   const token = getAuthToken()
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/warning/box/${deviceId}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/stickman/warning/box/${boxId}`, {
       method: 'GET',
       headers: {
         'Authorization': token,
@@ -125,7 +128,7 @@ const getDeviceWarnings = async () => {
         timestamp: warning.time ? new Date(warning.time).toLocaleString() : ''
       }))
     } else {
-      showFailToast(res.message || '获取设备历史异常信息失败')
+      showFailToast('获取设备历史异常信息失败')
     }
   } catch (err) {
     console.error('请求失败', err)
@@ -155,7 +158,7 @@ const getRecipients = async () => {
       // 更新联系人列表中的绑定状态
       updateNotifierBindingStatus()
     } else {
-      showFailToast(res.message || '获取联系人失败')
+      showFailToast('获取联系人失败')
     }
   } catch (err) {
     console.error('请求失败', err)
@@ -192,7 +195,7 @@ const getDeviceRecipients = async (deviceId: string) => {
       // 更新联系人列表中的绑定状态
       updateNotifierBindingStatus()
     } else {
-      showFailToast(res.message || '获取设备通知人失败')
+      showFailToast('获取设备通知人失败')
     }
   } catch (err) {
     console.error('请求失败', err)
@@ -226,7 +229,7 @@ const addRecipientToDeviceRecipients = async (recipient: any) => {
       // 更新设备绑定联系人列表
       await getDeviceRecipients(deviceId as string)
     } else {
-      showFailToast(res.message || '绑定失败')
+      showFailToast('绑定失败')
     }
   } catch (err) {
     showFailToast('网络错误，请重试')
@@ -384,7 +387,7 @@ const configureWifi = async () => {
       wifiForm.value.password = ''
       showWifiPopup.value = false
     } else {
-      showFailToast(res.message || '修改设备配置信息失败')
+      showFailToast('修改设备配置信息失败')
     }
   } catch (err) {
     console.error('请求失败', err)

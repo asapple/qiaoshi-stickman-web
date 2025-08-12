@@ -55,12 +55,12 @@ const fetchDevices = async () => {
     const result = await response.json()
     
     if (result.code === 200) {
-      // Transform data to match UI structure
+      console.log(result.data)
+      // Transform data to match UI structure - 去除状态字段
       devices.value = result.data.map((box: any) => ({
-        id: box.id,
-        name: box.boxName || `设备 ${box.boxDeviceId}`,
-        status: box.turnOn ? 'online' : 'offline',
-        boxDeviceId: box.boxDeviceId
+        boxId: box.id,
+        deviceId: box.boxDeviceId,
+        name: box.boxName || `设备 ${box.boxDeviceId}`
       }))
     } else {
       showFailToast(result.message || '获取设备列表失败')
@@ -75,13 +75,8 @@ const fetchDevices = async () => {
 }
 
 // Navigate to device detail
-const goToDeviceDetail = (deviceId: number) => {
-  router.push(`/device/${deviceId}`)
-}
-
-// Navigate to video test
-const goToVideoTest = () => {
-  router.push('/video-test')
+const goToDeviceDetail = (deviceId: string, boxId: number) => {
+  router.push({ path: `/device/${deviceId}`, query: { deviceId,boxId } })
 }
 
 // Show add device popup
@@ -143,34 +138,6 @@ const cancelAddDevice = () => {
   showAddDevicePopup.value = false
 }
 
-// Device status indicator
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'online':
-      return '#07c160'
-    case 'offline':
-      return '#c8c9cc'
-    case 'maintenance':
-      return '#ff976a'
-    default:
-      return '#c8c9cc'
-  }
-}
-
-// Device status text
-const getStatusText = (status: string) => {
-  switch (status) {
-    case 'online':
-      return '在线'
-    case 'offline':
-      return '离线'
-    case 'maintenance':
-      return '维护中'
-    default:
-      return '未知'
-  }
-}
-
 // Load devices on component mount
 onMounted(() => {
   fetchDevices()
@@ -190,14 +157,12 @@ onMounted(() => {
       <van-grid :column-num="2" :border="false" gutter="10">
         <van-grid-item 
           v-for="device in devices" 
-          :key="device.id"
-          @click="goToDeviceDetail(device.id)"
+          :key="device.boxId"
+          @click="goToDeviceDetail(device.deviceId, device.boxId)"
         >
           <div class="device-card">
-            <div class="status-indicator" :style="{ backgroundColor: getStatusColor(device.status) }"></div>
             <van-icon name="graphic" size="32" />
             <div class="device-name">{{ device.name }}</div>
-            <div class="device-status">{{ getStatusText(device.status) }}</div>
           </div>
         </van-grid-item>
         
@@ -212,15 +177,6 @@ onMounted(() => {
           <p>暂无设备</p>
           <van-button round @click="showAddDevice">添加设备</van-button>
         </div>
-        
-        <!-- Test Video Player Button -->
-        <van-grid-item>
-          <div class="device-card test-card" @click="goToVideoTest">
-            <van-icon name="video-o" size="48" color="#007bff" />
-            <h3>视频播放器测试</h3>
-            <p>测试Jessibuca播放器功能</p>
-          </div>
-        </van-grid-item>
       </van-grid>
     </div>
     
@@ -310,23 +266,28 @@ onMounted(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.status-indicator {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
 .device-name {
-  margin: 10px 0 5px;
+  margin-top: 10px;
+  font-size: 14px;
   font-weight: 500;
+  color: #333;
 }
 
-.device-status {
-  font-size: 12px;
+.loading-placeholder {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+}
+
+.empty-placeholder {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
   color: #999;
+}
+
+.empty-placeholder p {
+  margin: 10px 0;
 }
 
 .add-device-popup {
@@ -348,25 +309,10 @@ onMounted(() => {
 
 .popup-content {
   flex: 1;
-  padding: 20px 15px;
+  padding: 15px;
 }
 
 .popup-footer {
   padding: 0 15px 20px;
-}
-
-.loading-placeholder, .empty-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 40px 20px;
-  text-align: center;
-  color: #999;
-}
-
-.empty-placeholder p {
-  margin: 10px 0;
 }
 </style>
