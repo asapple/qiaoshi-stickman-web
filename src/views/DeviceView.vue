@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { 
   NavBar as VanNavBar, 
   Grid as VanGrid, 
@@ -19,6 +20,7 @@ import {
 } from 'vant'
 
 const router = useRouter()
+const route = useRoute()
 
 // Device data from API
 const devices = ref<any[]>([])
