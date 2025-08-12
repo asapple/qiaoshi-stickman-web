@@ -289,7 +289,6 @@ const toggleNotifier = async (phone: string) => {
 // Toggle stickman mode
 const toggleStickmanMode = async (value: boolean) => {
   const token = getAuthToken()
-  
   try {
     if(value){
       // 发送火柴人模式切换请求
@@ -304,14 +303,12 @@ const toggleStickmanMode = async (value: boolean) => {
     const res = await response.json()
     if (res.code === 200) {
       stickmanMode.value = value
+      videoStreamUrl.value = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}.live.flv`
+      console.log("火柴人url:",videoStreamUrl.value)
     } else {
       // 如果请求失败，恢复开关状态
       stickmanMode.value = !value
-      videoStreamUrl.value = `${import.meta.env.WVP_URL}/inference/${deviceId}.live.flv`
-      console.log("火柴人url:",videoStreamUrl.value)
-      }
-    } else {
-      videoStreamUrl.value = null
+    }
     }
   } catch (err) {
     // 如果请求失败，恢复开关状态
@@ -322,6 +319,10 @@ const toggleStickmanMode = async (value: boolean) => {
     closeToast()
   }
   console.log('火柴人模式状态:', value ? 'on' : 'off')
+  if(!value){
+    videoStreamUrl.value = device.value
+    console.log("url:",videoStreamUrl.value)
+  }
 }
 
 // Toggle anonymize faces
@@ -330,12 +331,12 @@ const toggleAnonymizeFaces = (value: boolean) => {
   console.log('人像隐去状态:', value ? 'on' : 'off')
 
   // If anonymize faces is turned on, also turn on stickman mode
-  if (value && !stickmanMode.value) {
+  if (value) {
     stickmanMode.value = true
-    videoStreamUrl.value = `${import.meta.env.WVP_URL}/inference/${deviceId}_hidden.live.flv`
+    videoStreamUrl.value = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}_hidden.live.flv`
     console.log("隐去人像url:",videoStreamUrl.value)
   } else {
-    videoStreamUrl.value = null
+    videoStreamUrl.value = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}.live.flv`
   }
 }
 
