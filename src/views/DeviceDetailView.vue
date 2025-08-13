@@ -318,7 +318,7 @@ const toggleStickmanMode = async (value: boolean) => {
     }
   } catch (err) {
     // 如果请求失败，恢复开关状态
-    stickmanMode.value = !value
+    //stickmanMode.value = !value
     console.error('火柴人模式切换请求失败:', err)
     showFailToast('网络错误，请重试')
   } finally {
