@@ -294,7 +294,8 @@ const toggleStickmanMode = async (value: boolean) => {
     if(value){
       // 发送火柴人模式切换请求
     stickmanMode.value = value
-    videoStreamUrl.value = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}.live.flv`  
+    videoStreamUrl.value = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}.live.flv` 
+    console.log("火柴人url："，videoStreamUrl.value) 
     const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/inference?deviceId=${deviceId}&rtsp=rtsp://8.149.243.30:554/rtp/${deviceId}_${deviceId}`, {
       method: 'POST',
       headers: {
