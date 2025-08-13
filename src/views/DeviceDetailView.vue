@@ -89,7 +89,8 @@ const getDeviceDetail = async () => {
       
       // 设置视频流URL（如果有的话）
       if (device.value) {
-        videoStreamUrl.value = device.value.replace(/^http:\/\/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/, 'https://asdasdnaoshidhaosi.icu')
+        //videoStreamUrl.value = device.value.replace(/^http:\/\/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/, 'https://asdasdnaoshidhaosi.icu')
+        videoStreamUrl.value = device.value
         console.log("流地址：",videoStreamUrl.value)
       } else {
         // 使用默认测试流
