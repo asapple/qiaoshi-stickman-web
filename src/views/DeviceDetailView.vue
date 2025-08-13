@@ -290,6 +290,7 @@ const toggleNotifier = async (phone: string) => {
 // Toggle stickman mode
 const toggleStickmanMode = async (value: boolean) => {
   const token = getAuthToken()
+  console.log('火柴人模式状态1:', value ? 'on' : 'off')
   try {
     if(value){
       // 发送火柴人模式切换请求
@@ -325,7 +326,6 @@ const toggleStickmanMode = async (value: boolean) => {
     console.log('火柴人模式状态:', value ? 'on' : 'off')
     closeToast()
   }
-  console.log('火柴人模式状态:', value ? 'on' : 'off')
   if(!value){
     videoStreamUrl.value = device.value
     console.log("url:",videoStreamUrl.value)
