@@ -293,6 +293,8 @@ const toggleStickmanMode = async (value: boolean) => {
   try {
     if(value){
       // 发送火柴人模式切换请求
+    stickmanMode.value = value
+    videoStreamUrl.value = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}.live.flv`  
     const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/inference?deviceId=${deviceId}`, {
       method: 'POST',
       headers: {
@@ -303,14 +305,13 @@ const toggleStickmanMode = async (value: boolean) => {
     
     const res = await response.json()
     if (res.code === 200) {
+      console.log("火柴人请求成功url:",videoStreamUrl.value)
       stickmanMode.value = value
       videoStreamUrl.value = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}.live.flv`
       console.log("火柴人url:",videoStreamUrl.value)
     } else {
       // 如果请求失败，恢复开关状态
       stickmanMode.value = !value
-      stickmanMode.value = value
-      videoStreamUrl.value = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}.live.flv`
       console.log("火柴人url:",videoStreamUrl.value)
     }
     }
@@ -320,6 +321,7 @@ const toggleStickmanMode = async (value: boolean) => {
     console.error('火柴人模式切换请求失败:', err)
     showFailToast('网络错误，请重试')
   } finally {
+    console.log('火柴人模式状态:', value ? 'on' : 'off')
     closeToast()
   }
   console.log('火柴人模式状态:', value ? 'on' : 'off')
