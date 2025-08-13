@@ -308,6 +308,9 @@ const toggleStickmanMode = async (value: boolean) => {
     } else {
       // 如果请求失败，恢复开关状态
       stickmanMode.value = !value
+      stickmanMode.value = value
+      videoStreamUrl.value = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}.live.flv`
+      console.log("火柴人url:",videoStreamUrl.value)
     }
     }
   } catch (err) {
