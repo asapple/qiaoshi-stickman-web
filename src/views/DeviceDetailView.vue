@@ -66,7 +66,7 @@ const getAuthToken = () => {
 const getDeviceDetail = async () => {
   const token = getAuthToken()
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/play?deviceId=${deviceId}&protocol=HTTPS_FLV`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/play?deviceId=${deviceId}&protocol=HTTP_FLV`, {
       method: 'GET',
       headers: {
         'Authorization': token,
