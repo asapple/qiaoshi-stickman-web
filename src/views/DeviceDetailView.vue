@@ -90,11 +90,16 @@ const getDeviceDetail = async () => {
       // 设置视频流URL（如果有的话）
       if (device.value) {
         //videoStreamUrl.value = device.value.replace(/^http:\/\/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/, 'https://asdasdnaoshidhaosi.icu')
-        videoStreamUrl.value = device.value
-        console.log("流地址：",videoStreamUrl.value)
+        // 延迟设置URL，给后端时间准备视频流
+        setTimeout(() => {
+          videoStreamUrl.value = device.value
+          console.log("流地址：",videoStreamUrl.value)
+        }, 2000) // 延迟2秒
       } else {
         // 使用默认测试流
-        videoStreamUrl.value = 'https://asdasdnaoshidhaosi.icu/live/stream.live.flv'
+        setTimeout(() => {
+          videoStreamUrl.value = 'https://asdasdnaoshidhaosi.icu/live/stream.live.flv'
+        }, 2000)
       }
     } else {
       showFailToast('获取设备信息失败')
@@ -294,27 +299,32 @@ const toggleStickmanMode = async (value: boolean) => {
   try {
     if(value){
       // 发送火柴人模式切换请求
-    stickmanMode.value = value
-    videoStreamUrl.value = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}.live.flv` 
-    console.log("火柴人url：",videoStreamUrl.value) 
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/inference?deviceId=${deviceId}&rtsp=rtsp://8.149.243.30:554/rtp/${deviceId}_${deviceId}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': token,
-        'Content-Type': 'application/json'
-      }
-    })
-    
-    const res = await response.json()
-    if (res.code === 200) {
-      console.log("火柴人请求成功url:",videoStreamUrl.value)
       stickmanMode.value = value
-      videoStreamUrl.value = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}.live.flv`
-      console.log("火柴人成功url:",videoStreamUrl.value)
-    } else {
-      // 如果请求失败，恢复开关状态
-      console.log("火柴人2url:",videoStreamUrl.value)
-    }
+      const newUrl = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}.live.flv`
+      console.log("火柴人url：", newUrl) 
+      
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/inference?deviceId=${deviceId}&rtsp=rtsp://8.149.243.30:554/rtp/${deviceId}_${deviceId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      const res = await response.json()
+      if (res.code === 200) {
+        console.log("火柴人请求成功url:", newUrl)
+        stickmanMode.value = value
+        // 延迟设置URL，给后端时间准备视频流
+        setTimeout(() => {
+          videoStreamUrl.value = newUrl
+          console.log("火柴人成功url:", videoStreamUrl.value)
+        }, 3000) // 延迟3秒
+      } else {
+        // 如果请求失败，恢复开关状态
+        stickmanMode.value = false
+        console.log("火柴人请求失败")
+      }
     }
   } catch (err) {
     // 如果请求失败，恢复开关状态
@@ -326,8 +336,11 @@ const toggleStickmanMode = async (value: boolean) => {
     closeToast()
   }
   if(!value){
-    videoStreamUrl.value = device.value
-    console.log("url:",videoStreamUrl.value)
+    // 延迟设置URL，给后端时间准备视频流
+    setTimeout(() => {
+      videoStreamUrl.value = device.value
+      console.log("url:", videoStreamUrl.value)
+    }, 2000) // 延迟2秒
   }
 }
 
@@ -339,10 +352,18 @@ const toggleAnonymizeFaces = (value: boolean) => {
   // If anonymize faces is turned on, also turn on stickman mode
   if (value) {
     stickmanMode.value = true
-    videoStreamUrl.value = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}_hidden.live.flv`
-    console.log("隐去人像url:",videoStreamUrl.value)
+    const newUrl = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}_hidden.live.flv`
+    console.log("隐去人像url:", newUrl)
+    // 延迟设置URL，给后端时间准备视频流
+    setTimeout(() => {
+      videoStreamUrl.value = newUrl
+    }, 3000) // 延迟3秒
   } else {
-    videoStreamUrl.value = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}.live.flv`
+    const newUrl = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}.live.flv`
+    // 延迟设置URL，给后端时间准备视频流
+    setTimeout(() => {
+      videoStreamUrl.value = newUrl
+    }, 2000) // 延迟2秒
   }
 }
 

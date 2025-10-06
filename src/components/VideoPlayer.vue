@@ -99,9 +99,9 @@ const createPlayer = () => {
     decoder: '/jessibuca/decoder.js',
     forceNoOffscreen: false,
     hasAudio: props.hasAudio,
-    heartTimeout: 5,
+    heartTimeout: 15, // 增加心跳超时时间
     heartTimeoutReplay: true,
-    heartTimeoutReplayTimes: 3,
+    heartTimeoutReplayTimes: 5, // 增加重试次数
     hiddenAutoPause: false,
     hotKey: true,
     isFlv: false,
@@ -109,10 +109,10 @@ const createPlayer = () => {
     isNotMute: isNotMute.value,
     isResize: false,
     keepScreenOn: true,
-    loadingText: '请稍等, 视频加载中......',
-    loadingTimeout: 10,
+    loadingText: '视频加载中，请耐心等待...',
+    loadingTimeout: 30, // 增加加载超时时间到30秒
     loadingTimeoutReplay: true,
-    loadingTimeoutReplayTimes: 3,
+    loadingTimeoutReplayTimes: 5, // 增加重试次数
     openWebglAlignment: false,
     operateBtns: {
       fullscreen: false,
@@ -125,11 +125,11 @@ const createPlayer = () => {
     rotate: 0,
     showBandwidth: false,
     supportDblclickFullscreen: false,
-    timeout: 10,
+    timeout: 30, // 增加连接超时时间
     useMSE: true,
     useWCS: false,
     useWebFullScreen: true,
-    videoBuffer: 0.1,
+    videoBuffer: 0.5, // 增加视频缓冲区
     wasmDecodeErrorReplay: true,
     wcsUseVideoRender: true
   }
@@ -203,6 +203,11 @@ const playBtnClick = () => {
 const play = (url: string) => {
   console.log('Jessibuca -> url: ', url)
   
+  if (!url) {
+    console.log('视频URL为空，跳过播放')
+    return
+  }
+  
   if (jessibucaPlayer) {
     destroy()
   }
@@ -215,13 +220,16 @@ const play = (url: string) => {
       loaded.value = true
     })
     
-    if (jessibucaPlayer.hasLoaded()) {
-      jessibucaPlayer.play(url)
-    } else {
-      jessibucaPlayer.on('load', () => {
+    // 再次延迟1秒确保播放器完全初始化
+    setTimeout(() => {
+      if (jessibucaPlayer.hasLoaded()) {
         jessibucaPlayer.play(url)
-      })
-    }
+      } else {
+        jessibucaPlayer.on('load', () => {
+          jessibucaPlayer.play(url)
+        })
+      }
+    }, 1000)
   }
 }
 
@@ -282,9 +290,10 @@ const isFullscreen = () => {
 // Watch for videoUrl changes
 watch(() => props.videoUrl, (newUrl) => {
   if (newUrl) {
-    nextTick(() => {
+    // 延迟3秒再尝试播放，给后端时间准备视频流
+    setTimeout(() => {
       play(newUrl)
-    })
+    }, 3000)
   }
 }, { immediate: true })
 
