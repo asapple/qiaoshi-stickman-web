@@ -62,9 +62,101 @@ const loaded = ref(false)
 const kBps = ref(0)
 const performance = ref('')
 const calculatedHeight = ref(props.height)
+const isPreconnecting = ref(false)
 
 // Player instance
 let jessibucaPlayer: any = null
+
+// 连接预热：预先建立HTTPS连接，让浏览器处理证书验证
+const preconnectToStream = async (url: string): Promise<boolean> => {
+  if (!url) return false
+  
+  try {
+    console.log('开始预热连接到:', url)
+    isPreconnecting.value = true
+    
+    // 创建超时控制器
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10秒超时
+    
+    // 方法1: 使用Range请求获取少量数据，建立连接
+    // 这样可以触发浏览器的证书验证，同时不会下载太多数据
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        mode: 'cors',
+        cache: 'no-cache',
+        headers: {
+          'Range': 'bytes=0-4096' // 请求4KB数据，建立连接和证书验证
+        },
+        signal: controller.signal
+      })
+      
+      clearTimeout(timeoutId)
+      
+      // 读取响应以建立连接
+      if (response.ok || response.status === 206) {
+        if (response.body) {
+          const reader = response.body.getReader()
+          const result = await reader.read()
+          // 读取一小部分数据后立即取消，建立连接即可
+          await reader.cancel()
+        }
+        console.log('连接预热成功，状态码:', response.status)
+        isPreconnecting.value = false
+        return true
+      }
+    } catch (rangeError: any) {
+      clearTimeout(timeoutId)
+      
+      // 如果是中止信号，直接返回
+      if (rangeError.name === 'AbortError') {
+        console.warn('连接预热超时')
+        isPreconnecting.value = false
+        return true
+      }
+      
+      console.warn('Range请求失败，尝试HEAD请求:', rangeError.message)
+      
+      // 方法2: 如果Range请求失败，尝试HEAD请求
+      const headController = new AbortController()
+      const headTimeoutId = setTimeout(() => headController.abort(), 10000)
+      
+      try {
+        const headResponse = await fetch(url, {
+          method: 'HEAD',
+          mode: 'cors',
+          cache: 'no-cache',
+          signal: headController.signal
+        })
+        
+        clearTimeout(headTimeoutId)
+        console.log('HEAD请求预热成功，状态码:', headResponse.status)
+        isPreconnecting.value = false
+        return true
+      } catch (headError: any) {
+        clearTimeout(headTimeoutId)
+        if (headError.name === 'AbortError') {
+          console.warn('HEAD请求超时')
+        } else {
+          console.warn('HEAD请求也失败:', headError.message)
+        }
+      }
+    }
+    
+    // 如果所有方法都失败，仍然返回true
+    // 因为即使预热失败，播放器也可能能正常工作（特别是如果用户之前访问过）
+    console.warn('连接预热失败，但将继续尝试播放')
+    isPreconnecting.value = false
+    return true
+    
+  } catch (error: any) {
+    console.warn('连接预热过程出错:', error.message)
+    isPreconnecting.value = false
+    // 即使出错也返回true，让播放器尝试播放
+    return true
+  }
+}
 
 // Methods
 const updatePlayerDomSize = () => {
@@ -145,6 +237,11 @@ const createPlayer = () => {
   }
 }
 
+// 错误重试相关变量
+let errorRetryCount = 0
+const maxErrorRetries = 2
+let currentVideoUrl = ''
+
 const setupPlayerEvents = () => {
   if (!jessibucaPlayer) return
 
@@ -156,6 +253,7 @@ const setupPlayerEvents = () => {
   jessibucaPlayer.on('play', () => {
     playing.value = true
     loaded.value = true
+    errorRetryCount = 0 // 播放成功后重置错误计数
     emit('play')
   })
 
@@ -182,9 +280,38 @@ const setupPlayerEvents = () => {
     kBps.value = Math.round(kbps)
   })
 
-  jessibucaPlayer.on('error', (msg: string) => {
+  jessibucaPlayer.on('error', async (msg: string) => {
     console.log('Jessibuca -> error: ', msg)
-    emit('error', msg)
+    
+    // 检查是否是证书错误或连接错误
+    const msgLower = msg.toLowerCase()
+    const isCertError = msg.indexOf('CERT') !== -1 || msgLower.indexOf('certificate') !== -1 || 
+                       msg.indexOf('ERR_CERT') !== -1 || msgLower.indexOf('fetcherror') !== -1 ||
+                       msgLower.indexOf('common_name') !== -1 || msgLower.indexOf('common name') !== -1
+    
+    if (isCertError && errorRetryCount < maxErrorRetries && currentVideoUrl) {
+      errorRetryCount++
+      console.log(`检测到证书/连接错误，进行第${errorRetryCount}次重试...`)
+      
+      // 再次预热连接，给浏览器更多时间处理证书
+      await preconnectToStream(currentVideoUrl)
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      // 重新播放
+      if (jessibucaPlayer) {
+        try {
+          jessibucaPlayer.play(currentVideoUrl)
+        } catch (e) {
+          console.error('重试播放失败:', e)
+          errorRetryCount = 0
+          emit('error', msg)
+        }
+      }
+    } else {
+      // 如果重试次数用完或不是证书错误，则上报错误
+      errorRetryCount = 0
+      emit('error', msg)
+    }
   })
 
   jessibucaPlayer.on('timeout', (msg: string) => {
@@ -196,17 +323,28 @@ const setupPlayerEvents = () => {
   })
 }
 
-const playBtnClick = () => {
-  play(props.videoUrl)
+const playBtnClick = async () => {
+  await play(props.videoUrl)
 }
 
-const play = (url: string) => {
+const play = async (url: string) => {
   console.log('Jessibuca -> url: ', url)
   
   if (!url) {
     console.log('视频URL为空，跳过播放')
     return
   }
+  
+  // 保存当前URL，用于错误重试
+  currentVideoUrl = url
+  errorRetryCount = 0 // 重置错误计数
+  
+  // 先预热连接，让浏览器处理证书验证
+  console.log('开始连接预热...')
+  await preconnectToStream(url)
+  
+  // 等待一小段时间，确保连接建立
+  await new Promise(resolve => setTimeout(resolve, 500))
   
   if (jessibucaPlayer) {
     destroy()
@@ -215,21 +353,18 @@ const play = (url: string) => {
   createPlayer()
   
   if (jessibucaPlayer) {
-    jessibucaPlayer.on('play', () => {
-      playing.value = true
-      loaded.value = true
-    })
-    
-    // 再次延迟1秒确保播放器完全初始化
+    // 延迟确保播放器完全初始化，并给连接更多时间建立
     setTimeout(() => {
-      if (jessibucaPlayer.hasLoaded()) {
+      if (jessibucaPlayer && jessibucaPlayer.hasLoaded()) {
+        console.log('播放器已加载，开始播放')
         jessibucaPlayer.play(url)
-      } else {
+      } else if (jessibucaPlayer) {
         jessibucaPlayer.on('load', () => {
+          console.log('播放器加载完成，开始播放')
           jessibucaPlayer.play(url)
         })
       }
-    }, 1000)
+    }, 1500) // 增加延迟时间，确保连接建立
   }
 }
 
@@ -288,11 +423,11 @@ const isFullscreen = () => {
 }
 
 // Watch for videoUrl changes
-watch(() => props.videoUrl, (newUrl) => {
+watch(() => props.videoUrl, async (newUrl) => {
   if (newUrl) {
     // 延迟3秒再尝试播放，给后端时间准备视频流
-    setTimeout(() => {
-      play(newUrl)
+    setTimeout(async () => {
+      await play(newUrl)
     }, 3000)
   }
 }, { immediate: true })
