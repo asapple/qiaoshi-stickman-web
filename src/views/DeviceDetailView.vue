@@ -303,7 +303,7 @@ const toggleStickmanMode = async (value: boolean) => {
       const newUrl = `https://asdasdnaoshidhaosi.icu/inference/${deviceId}.live.flv`
       console.log("火柴人url：", newUrl) 
       
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/inference?deviceId=${deviceId}&rtsp=rtsp://8.149.243.30:554/rtp/${deviceId}_${deviceId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/inference?deviceId=${deviceId}&rtsp=rtsp://8.154.36.10:554/rtp/${deviceId}_${deviceId}`, {
         method: 'POST',
         headers: {
           'Authorization': token,
