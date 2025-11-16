@@ -98,7 +98,7 @@ const getDeviceDetail = async () => {
       } else {
         // 使用默认测试流
         setTimeout(() => {
-          videoStreamUrl.value = 'https://8.154.36.10/live/stream.live.flv'
+          videoStreamUrl.value = 'https://47.118.84.20/live/stream.live.flv'
         }, 2000)
       }
     } else {
@@ -300,10 +300,10 @@ const toggleStickmanMode = async (value: boolean) => {
     if(value){
       // 发送火柴人模式切换请求
       stickmanMode.value = value
-      const newUrl = `https://8.154.36.10:443/inference/${deviceId}.live.flv`
+      const newUrl = `https://47.118.84.20:443/inference/${deviceId}.live.flv`
       console.log("火柴人url：", newUrl) 
       
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/inference?deviceId=${deviceId}&rtsp=rtsp://8.154.36.10:554/rtp/${deviceId}_${deviceId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/inference?deviceId=${deviceId}&rtsp=rtsp://47.118.84.20:554/rtp/${deviceId}_${deviceId}`, {
         method: 'POST',
         headers: {
           'Authorization': token,
@@ -352,14 +352,14 @@ const toggleAnonymizeFaces = (value: boolean) => {
   // If anonymize faces is turned on, also turn on stickman mode
   if (value) {
     stickmanMode.value = true
-    const newUrl = `https://8.154.36.10:443/inference/${deviceId}_hidden.live.flv`
+    const newUrl = `https://47.118.84.20:443/inference/${deviceId}_hidden.live.flv`
     console.log("隐去人像url:", newUrl)
     // 延迟设置URL，给后端时间准备视频流
     setTimeout(() => {
       videoStreamUrl.value = newUrl
     }, 3000) // 延迟3秒
   } else {
-    const newUrl = `https://8.154.36.10:443/inference/${deviceId}.live.flv`
+    const newUrl = `https://47.118.84.20:443/inference/${deviceId}.live.flv`
     // 延迟设置URL，给后端时间准备视频流
     setTimeout(() => {
       videoStreamUrl.value = newUrl
