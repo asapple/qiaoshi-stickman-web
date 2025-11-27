@@ -64,6 +64,10 @@ const performance = ref('')
 const calculatedHeight = ref(props.height)
 const isPreconnecting = ref(false)
 
+// 添加播放状态管理
+const isPlaying = ref(false)
+const playPromise = ref<Promise<void> | null>(null)
+
 // Player instance
 let jessibucaPlayer: any = null
 
@@ -247,11 +251,13 @@ const setupPlayerEvents = () => {
 
   jessibucaPlayer.on('pause', () => {
     playing.value = false
+    isPlaying.value = false
     emit('pause')
   })
 
   jessibucaPlayer.on('play', () => {
     playing.value = true
+    isPlaying.value = true
     loaded.value = true
     errorRetryCount = 0 // 播放成功后重置错误计数
     emit('play')
@@ -335,6 +341,26 @@ const play = async (url: string) => {
     return
   }
   
+  // 如果正在播放，先等待当前播放完成或取消
+  if (playPromise.value) {
+    try {
+      await playPromise.value
+    } catch (e) {
+      // 忽略中断错误
+      console.log('之前的播放被中断')
+    }
+  }
+  
+  // 如果正在播放，先暂停
+  if (isPlaying.value && jessibucaPlayer) {
+    try {
+      jessibucaPlayer.pause()
+      await new Promise(resolve => setTimeout(resolve, 100))
+    } catch (e) {
+      console.log('暂停时出错:', e)
+    }
+  }
+  
   // 保存当前URL，用于错误重试
   currentVideoUrl = url
   errorRetryCount = 0 // 重置错误计数
@@ -354,23 +380,56 @@ const play = async (url: string) => {
   
   if (jessibucaPlayer) {
     // 延迟确保播放器完全初始化，并给连接更多时间建立
-    setTimeout(() => {
+    setTimeout(async () => {
       if (jessibucaPlayer && jessibucaPlayer.hasLoaded()) {
         console.log('播放器已加载，开始播放')
-        jessibucaPlayer.play(url)
+        try {
+          // 使用 try-catch 捕获 play() 的 Promise 错误
+          playPromise.value = Promise.resolve(jessibucaPlayer.play(url))
+          await playPromise.value
+          isPlaying.value = true
+        } catch (error: any) {
+          // 忽略 AbortError，这是正常的竞态情况
+          if (error.name !== 'AbortError') {
+            console.error('播放失败:', error)
+            emit('error', error.message || '播放失败')
+          }
+        } finally {
+          playPromise.value = null
+        }
       } else if (jessibucaPlayer) {
-        jessibucaPlayer.on('load', () => {
+        jessibucaPlayer.on('load', async () => {
           console.log('播放器加载完成，开始播放')
-          jessibucaPlayer.play(url)
+          try {
+            playPromise.value = Promise.resolve(jessibucaPlayer.play(url))
+            await playPromise.value
+            isPlaying.value = true
+          } catch (error: any) {
+            if (error.name !== 'AbortError') {
+              console.error('播放失败:', error)
+              emit('error', error.message || '播放失败')
+            }
+          } finally {
+            playPromise.value = null
+          }
         })
       }
-    }, 1500) // 增加延迟时间，确保连接建立
+    }, 1500)
   }
 }
 
 const pause = () => {
-  if (jessibucaPlayer) {
-    jessibucaPlayer.pause()
+  if (jessibucaPlayer && isPlaying.value) {
+    try {
+      jessibucaPlayer.pause()
+      isPlaying.value = false
+    } catch (error: any) {
+      // 忽略 AbortError
+      if (error.name !== 'AbortError') {
+        console.error('暂停失败:', error)
+      }
+      isPlaying.value = false
+    }
   }
   playing.value = false
 }
@@ -423,10 +482,16 @@ const isFullscreen = () => {
 }
 
 // Watch for videoUrl changes
+let playTimeout: NodeJS.Timeout | null = null
 watch(() => props.videoUrl, async (newUrl) => {
+  // 清除之前的定时器
+  if (playTimeout) {
+    clearTimeout(playTimeout)
+  }
+  
   if (newUrl) {
     // 延迟3秒再尝试播放，给后端时间准备视频流
-    setTimeout(async () => {
+    playTimeout = setTimeout(async () => {
       await play(newUrl)
     }, 3000)
   }
