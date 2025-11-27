@@ -292,25 +292,54 @@ const toggleNotifier = async (phone: string) => {
 }
 
 // Toggle anonymize faces
-const toggleAnonymizeFaces = (value: boolean) => {
-  anonymizeFaces.value = value
-  console.log('隐去人像状态:', value ? 'on' : 'off')
-
-  if (value) {
-    // 打开：播放隐去人像视频
-    const newUrl = `https://47.118.84.20:443/inference/${deviceId}_hidden.live.flv`
-    console.log("隐去人像url:", newUrl)
-    // 延迟设置URL，给后端时间准备视频流
-    setTimeout(() => {
-      videoStreamUrl.value = newUrl
-    }, 3000) // 延迟3秒
-  } else {
-    // 关闭：播放原视频
-    console.log("切换到原视频")
+const toggleAnonymizeFaces = async (value: boolean) => {
+  const token = getAuthToken()
+  console.log('隐去人像状态1:', value ? 'on' : 'off')
+  try {
+    if(value){
+      // 发送隐去人像模式切换请求
+      anonymizeFaces.value = value
+      const newUrl = `https://47.118.84.20:443/inference/${deviceId}_hidden.live.flv`
+      console.log("隐去人像url：", newUrl) 
+      
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/inference?deviceId=${deviceId}&rtsp=rtsp://47.118.84.20:554/rtp/${deviceId}_hidden_${deviceId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      const res = await response.json()
+      if (res.code === 200) {
+        console.log("隐去人像请求成功url:", newUrl)
+        anonymizeFaces.value = value
+        // 延迟设置URL，给后端时间准备视频流
+        setTimeout(() => {
+          videoStreamUrl.value = newUrl
+          console.log("隐去人像成功url:", videoStreamUrl.value)
+        }, 3000) // 延迟3秒
+      } else {
+        // 如果请求失败，恢复开关状态
+        anonymizeFaces.value = false
+        console.log("隐去人像请求失败")
+      }
+    }
+  } catch (err) {
+    // 如果请求失败，恢复开关状态
+    //anonymizeFaces.value = !value
+    console.error('隐去人像模式切换请求失败:', err)
+    showFailToast('网络错误，请重试')
+  } finally {
+    console.log('隐去人像状态:', value ? 'on' : 'off')
+    closeToast()
+  }
+  if(!value){
+    anonymizeFaces.value = value
     // 延迟设置URL，给后端时间准备视频流
     setTimeout(() => {
       videoStreamUrl.value = device.value
-      console.log("原视频url:", videoStreamUrl.value)
+      console.log("url:", videoStreamUrl.value)
     }, 2000) // 延迟2秒
   }
 }

@@ -482,7 +482,11 @@ const isFullscreen = () => {
 }
 
 // Watch for videoUrl changes
+<<<<<<< HEAD
 let playTimeout: ReturnType<typeof setTimeout> | null = null
+=======
+let playTimeout: NodeJS.Timeout | null = null
+>>>>>>> 7c79894 (优化播放器)
 watch(() => props.videoUrl, async (newUrl) => {
   // 清除之前的定时器
   if (playTimeout) {
