@@ -28,7 +28,6 @@ console.log("deviceId:",deviceId,"boxId:",boxId)
 const videoStreamUrl = ref('')
 
 // Feature toggles
-const stickmanMode = ref(false)
 const anonymizeFaces = ref(false)
 
 // WIFI configuration popup
@@ -292,66 +291,13 @@ const toggleNotifier = async (phone: string) => {
   }
 }
 
-// Toggle stickman mode
-const toggleStickmanMode = async (value: boolean) => {
-  const token = getAuthToken()
-  console.log('火柴人模式状态1:', value ? 'on' : 'off')
-  try {
-    if(value){
-      // 发送火柴人模式切换请求
-      stickmanMode.value = value
-      const newUrl = `https://47.118.84.20:443/inference/${deviceId}.live.flv`
-      console.log("火柴人url：", newUrl) 
-      
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/inference?deviceId=${deviceId}&rtsp=rtsp://47.118.84.20:554/rtp/${deviceId}_${deviceId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': token,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      const res = await response.json()
-      if (res.code === 200) {
-        console.log("火柴人请求成功url:", newUrl)
-        stickmanMode.value = value
-        // 延迟设置URL，给后端时间准备视频流
-        setTimeout(() => {
-          videoStreamUrl.value = newUrl
-          console.log("火柴人成功url:", videoStreamUrl.value)
-        }, 3000) // 延迟3秒
-      } else {
-        // 如果请求失败，恢复开关状态
-        stickmanMode.value = false
-        console.log("火柴人请求失败")
-      }
-    }
-  } catch (err) {
-    // 如果请求失败，恢复开关状态
-    //stickmanMode.value = !value
-    console.error('火柴人模式切换请求失败:', err)
-    showFailToast('网络错误，请重试')
-  } finally {
-    console.log('火柴人模式状态:', value ? 'on' : 'off')
-    closeToast()
-  }
-  if(!value){
-    // 延迟设置URL，给后端时间准备视频流
-    setTimeout(() => {
-      videoStreamUrl.value = device.value
-      console.log("url:", videoStreamUrl.value)
-    }, 2000) // 延迟2秒
-  }
-}
-
 // Toggle anonymize faces
 const toggleAnonymizeFaces = (value: boolean) => {
   anonymizeFaces.value = value
-  console.log('人像隐去状态:', value ? 'on' : 'off')
+  console.log('隐去人像状态:', value ? 'on' : 'off')
 
-  // If anonymize faces is turned on, also turn on stickman mode
   if (value) {
-    stickmanMode.value = true
+    // 打开：播放隐去人像视频
     const newUrl = `https://47.118.84.20:443/inference/${deviceId}_hidden.live.flv`
     console.log("隐去人像url:", newUrl)
     // 延迟设置URL，给后端时间准备视频流
@@ -359,10 +305,12 @@ const toggleAnonymizeFaces = (value: boolean) => {
       videoStreamUrl.value = newUrl
     }, 3000) // 延迟3秒
   } else {
-    const newUrl = `https://47.118.84.20:443/inference/${deviceId}.live.flv`
+    // 关闭：播放原视频
+    console.log("切换到原视频")
     // 延迟设置URL，给后端时间准备视频流
     setTimeout(() => {
-      videoStreamUrl.value = newUrl
+      videoStreamUrl.value = device.value
+      console.log("原视频url:", videoStreamUrl.value)
     }, 2000) // 延迟2秒
   }
 }
@@ -513,17 +461,7 @@ onMounted(() => {
       <div class="control-list">
         <!-- Feature Toggles -->
         <div class="control-item">
-          <span class="control-label">火柴人模式</span>
-          <van-switch
-            v-model="stickmanMode"
-            :disabled="anonymizeFaces"
-            size="20px"
-            @change="toggleStickmanMode"
-          />
-        </div>
-
-        <div class="control-item">
-          <span class="control-label">人像隐去</span>
+          <span class="control-label">隐去人像</span>
           <van-switch
             v-model="anonymizeFaces"
             size="20px"
