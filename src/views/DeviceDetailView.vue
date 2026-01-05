@@ -299,10 +299,10 @@ const toggleAnonymizeFaces = async (value: boolean) => {
     if(value){
       // 发送隐去人像模式切换请求
       anonymizeFaces.value = value
-      const newUrl = `https://47.118.84.20:443/inference/${deviceId}_hidden.live.flv`
+      const newUrl = `http://47.118.84.20:443/inference/${deviceId}_hidden.live.flv`
       console.log("隐去人像url：", newUrl) 
-      
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/inference?deviceId=${deviceId}&rtsp=rtsp://47.118.84.20:554/rtp/${deviceId}_hidden_${deviceId}`, {
+
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/realtime/inference?deviceId=${deviceId}&rtsp=rtsp://47.118.84.20:554/rtp/${deviceId}_${deviceId}`, {
         method: 'POST',
         headers: {
           'Authorization': token,
